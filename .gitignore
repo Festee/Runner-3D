@@ -1,0 +1,28 @@
+# Node modules
+data
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# build output
+/dist
+/build
+
+# assets and caches
+*.log
+*.tmp
+*.cache
+
+# environmental files
+.env
