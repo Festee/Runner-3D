@@ -1,15 +1,12 @@
 import * as THREE from 'https://unpkg.com/three@0.183.2/build/three.module.js';
 
-const state = {
-  started: false,
-  score: 0,
-  gameOver: false,
-  speed: 0.010,
-  lane: 0, // -1, 0, 1
-  isJumping: false,
-  jumpVelocity: 0,
-  gravity: 0.010,
-};
+import { createInitialGameState } from './src/core/gameState.js';
+import { setupPlayerInput } from './src/core/inputState.js';
+import { updatePlayerMovement } from './src/logic/movement.js';
+import { createPlayerMesh, syncPlayerMesh } from './src/render/playerMesh.js';
+import { createCamera, updateCamera, resizeCamera } from './src/render/camera.js';
+
+const state = createInitialGameState();
 
 const lanePositions = [-1.8, 0, 1.8];
 const segmentLength = 160;
@@ -24,14 +21,7 @@ scene.background = new THREE.Color(0x87ceeb);
 scene.fog = new THREE.Fog(0x87ceeb, 18, 85);
 
 // CAMERA
-const camera = new THREE.PerspectiveCamera(
-  70,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  1000
-);
-camera.position.set(0, 5, 12);
-camera.lookAt(0, 1, -20);
+const camera = createCamera();
 
 // RENDERER
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -112,20 +102,15 @@ function createWallSegment(x, z) {
   return wall;
 }
 
-// create 3 road segments and 3 wall segments per side
 for (let i = 0; i < totalSegments; i++) {
-  const z = -i * segmentLength; // start from z=0, then -160, -320...
-
+  const z = -i * segmentLength;
   roadSegments.push(createRoadSegment(z));
   leftWallSegments.push(createWallSegment(-wallOffset, z));
   rightWallSegments.push(createWallSegment(wallOffset, z));
 }
 
 // PLAYER
-const playerGeometry = new THREE.BoxGeometry(0.9, 1.4, 0.9);
-const playerMaterial = new THREE.MeshLambertMaterial({ color: 0xb02a1d });
-const player = new THREE.Mesh(playerGeometry, playerMaterial);
-player.position.set(0, 0.2, 3);
+const player = createPlayerMesh();
 scene.add(player);
 
 // OBSTACLES
@@ -191,11 +176,15 @@ function startGame() {
   state.gameOver = false;
   state.score = 0;
   state.speed = 0.010;
-  state.lane = 0;
-  state.isJumping = false;
-  state.jumpVelocity = 0;
 
-  player.position.set(0, 0.2, 3);
+  state.player.lane = 0;
+  state.player.x = 0;
+  state.player.y = 0.2;
+  state.player.z = 3;
+  state.player.isJumping = false;
+  state.player.jumpVelocity = 0;
+
+  syncPlayerMesh(player, state.player);
 
   obstacles.forEach((obstacle, index) => {
     obstacle.position.z = -30 - index * 25;
@@ -224,44 +213,7 @@ function showGameOver() {
 renderStartScreen();
 
 // INPUT
-window.addEventListener('keydown', (e) => {
-  if (!state.started || state.gameOver) return;
-
-  if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
-    state.lane = Math.max(-1, state.lane - 1);
-  }
-
-  if (e.code === 'ArrowRight' || e.code === 'KeyD') {
-    state.lane = Math.min(1, state.lane + 1);
-  }
-
-  if ((e.code === 'Space' || e.code === 'ArrowUp') && !state.isJumping) {
-    state.isJumping = true;
-    state.jumpVelocity = 0.16;
-  }
-});
-
-// HELPERS
-function updatePlayer() {
-  const laneToX = {
-    '-1': -1.8,
-    '0': 0,
-    '1': 1.8
-  };
-
-  player.position.x += (laneToX[state.lane] - player.position.x) * 0.18;
-
-  if (state.isJumping) {
-    player.position.y += state.jumpVelocity;
-    state.jumpVelocity -= state.gravity;
-
-    if (player.position.y <= 0.2) {
-      player.position.y = 0.2;
-      state.isJumping = false;
-      state.jumpVelocity = 0;
-    }
-  }
-}
+setupPlayerInput(state);
 
 function recycleSegments(segments) {
   for (const segment of segments) {
@@ -307,8 +259,8 @@ function updateObstacles() {
     }
 
     const zClose = obstacle.position.z > 2.0 && obstacle.position.z < 4.0;
-    const sameLane = Math.abs(obstacle.position.x - player.position.x) < 0.8;
-    const lowEnough = player.position.y < 1.05;
+    const sameLane = Math.abs(obstacle.position.x - state.player.x) < 0.8;
+    const lowEnough = state.player.y < 1.05;
 
     if (zClose && sameLane && lowEnough) {
       showGameOver();
@@ -329,23 +281,21 @@ function animate() {
   requestAnimationFrame(animate);
 
   if (state.started && !state.gameOver) {
-    updatePlayer();
+    updatePlayerMovement(state.player);
+    syncPlayerMesh(player, state.player);
+
     updateWorld();
     updateObstacles();
     updateScore();
   }
 
-  camera.position.x += (player.position.x - camera.position.x) * 0.06;
-  camera.position.z = 8;
-  camera.lookAt(player.position.x, 1, -5);
-
+  updateCamera(camera, state.player);
   renderer.render(scene, camera);
 }
 
 animate();
 
 window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
+  resizeCamera(camera);
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
