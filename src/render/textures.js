@@ -8,7 +8,9 @@ export function loadWorldTextures() {
     (tex) => {
       tex.wrapS = THREE.RepeatWrapping;
       tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(1, 12);
+      tex.repeat.set(1, 20);
+      tex.magFilter = THREE.LinearFilter;
+      tex.minFilter = THREE.LinearMipmapLinearFilter;
       tex.colorSpace = THREE.SRGBColorSpace;
     },
     undefined,
@@ -20,8 +22,10 @@ export function loadWorldTextures() {
     (tex) => {
       tex.wrapS = THREE.RepeatWrapping;
       tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(1, 20);
+      tex.repeat.set(1, 40);
       tex.offset.y = 0;
+      tex.magFilter = THREE.LinearFilter;
+      tex.minFilter = THREE.LinearMipmapLinearFilter;
       tex.colorSpace = THREE.SRGBColorSpace;
     },
     undefined,

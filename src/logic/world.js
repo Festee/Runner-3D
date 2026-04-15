@@ -1,6 +1,6 @@
 function recycleSegments(segments, segmentLength, totalSegments) {
   for (const segment of segments) {
-    if (segment.position.z > 20) {
+    if (segment.position.z > segmentLength * (totalSegments - 1)) {
       segment.position.z -= segmentLength * totalSegments;
     }
   }

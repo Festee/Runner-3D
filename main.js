@@ -27,6 +27,8 @@ const camera = createCamera();
 // renderer
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap;
 document.body.style.margin = '0';
 document.body.style.overflow = 'hidden';
 document.body.appendChild(renderer.domElement);
@@ -53,6 +55,8 @@ function createObstacle(z) {
   const obstacle = new THREE.Mesh(obstacleGeometry, obstacleMaterial);
   const laneIndex = Math.floor(Math.random() * lanePositions.length);
   obstacle.position.set(lanePositions[laneIndex], 0, z);
+  obstacle.castShadow = true;
+  obstacle.receiveShadow = true;
   scene.add(obstacle);
   obstacles.push(obstacle);
 }
