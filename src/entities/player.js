@@ -8,6 +8,8 @@ export function createInitialPlayerState() {
     z: PLAYER_DEFAULTS.z,
     isJumping: PLAYER_DEFAULTS.isJumping,
     jumpVelocity: PLAYER_DEFAULTS.jumpVelocity,
+    isLowering: PLAYER_DEFAULTS.isLowering,
+    lowerVelocity: PLAYER_DEFAULTS.lowerVelocity,
     gravity: PLAYER_DEFAULTS.gravity,
   };
 }

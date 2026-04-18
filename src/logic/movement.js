@@ -15,5 +15,14 @@ export function updatePlayerMovement(player) {
       player.isJumping = false;
       player.jumpVelocity = 0;
     }
+  } else if (player.isLowering) {
+    player.y += player.lowerVelocity;
+    player.lowerVelocity -= player.gravity;
+
+    if (player.y <= PLAYER_DEFAULTS.lowerY) {
+      player.y = PLAYER_DEFAULTS.lowerY;
+      player.isLowering = false;
+      player.lowerVelocity = 0;
+    }
   }
 }

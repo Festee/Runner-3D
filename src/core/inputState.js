@@ -12,9 +12,14 @@ export function setupPlayerInput(state) {
       state.player.lane = Math.min(1, state.player.lane + 1);
     }
 
-    if ((e.code === 'Space' || e.code === 'ArrowUp') && !state.player.isJumping) {
+    if ((e.code === 'Space' || e.code === 'ArrowUp') && !state.player.isJumping && !state.player.isLowering) {
       state.player.isJumping = true;
       state.player.jumpVelocity = PLAYER_DEFAULTS.jumpStrength;
+    }
+
+    if (e.code === 'ArrowDown' && !state.player.isLowering && !state.player.isJumping) {
+      state.player.isLowering = true;
+      state.player.lowerVelocity = -PLAYER_DEFAULTS.lowerStrength;
     }
   });
 }
