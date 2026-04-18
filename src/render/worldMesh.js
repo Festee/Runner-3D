@@ -4,10 +4,12 @@ import { WORLD_DEFAULTS } from '../core/worldConstants.js';
 function createRoadSegment(scene, roadGeometry, roadMaterial, z) {
   const road = new THREE.Mesh(roadGeometry, roadMaterial);
 
-  const roadCenterY = -0.25 - WORLD_DEFAULTS.roadThickness / 2;
-  road.position.set(0, roadCenterY, z);
+  const roadCenterY =
+    WORLD_DEFAULTS.roadY - WORLD_DEFAULTS.roadThickness / 2;
 
+  road.position.set(0, roadCenterY, z);
   road.receiveShadow = true;
+
   scene.add(road);
   return road;
 }
@@ -15,8 +17,8 @@ function createRoadSegment(scene, roadGeometry, roadMaterial, z) {
 function createWallSegment(scene, wallGeometry, wallMaterial, x, z) {
   const wall = new THREE.Mesh(wallGeometry, wallMaterial);
 
-  // pak ma poshtë që me hy nën rrugë vizualisht
-  const wallCenterY = -0.33 + WORLD_DEFAULTS.wallHeight / 2;
+  const wallCenterY =
+    WORLD_DEFAULTS.wallY + WORLD_DEFAULTS.wallHeight / 2;
 
   wall.position.set(x, wallCenterY, z);
   wall.castShadow = true;

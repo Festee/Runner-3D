@@ -1,3 +1,5 @@
+import { WORLD_DEFAULTS } from '../core/worldConstants.js';
+
 function recycleSegments(segments, segmentLength, totalSegments) {
   for (const segment of segments) {
     if (segment.position.z > segmentLength * (totalSegments - 1)) {
@@ -7,7 +9,7 @@ function recycleSegments(segments, segmentLength, totalSegments) {
 }
 
 export function updateWorld(state, world, textures) {
-  const moveSpeed = state.speed * 25;
+  const moveSpeed = state.speed * WORLD_DEFAULTS.scrollSpeedMultiplier;
 
   textures.groundTexture.offset.y -= state.speed;
   textures.wallTexture.offset.y -= state.speed * 0.35;
