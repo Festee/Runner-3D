@@ -1,44 +1,29 @@
-function recycleSegments(segments, segmentLength, totalSegments) {
-  for (const segment of segments) {
-    if (segment.position.z > segmentLength * (totalSegments - 1)) {
-      segment.position.z -= segmentLength * totalSegments;
-    }
+import { WORLD_DEFAULTS } from '../core/worldConstants.js';
+
+function syncSegmentZ(segment, z) {
+  segment.z = z;
+  segment.road.position.z = z;
+  segment.leftSidewalk.position.z = z;
+  segment.rightSidewalk.position.z = z;
+  segment.leftSide.position.z = z;
+  segment.rightSide.position.z = z;
+}
+
+function recycleSegment(segment, segmentLength, totalSegments) {
+  const recycleLimit = segmentLength * (totalSegments - 1);
+
+  if (segment.z > recycleLimit) {
+    syncSegmentZ(segment, segment.z - segmentLength * totalSegments);
   }
 }
 
 export function updateWorld(state, world, textures) {
-  const moveSpeed = state.speed * 25;
+  const moveSpeed = state.speed * WORLD_DEFAULTS.scrollSpeedMultiplier;
 
   textures.groundTexture.offset.y -= state.speed;
-  textures.wallTexture.offset.y -= state.speed * 0.35;
 
-  for (const road of world.roadSegments) {
-    road.position.z += moveSpeed;
+  for (const segment of world.segments) {
+    syncSegmentZ(segment, segment.z + moveSpeed);
+    recycleSegment(segment, world.segmentLength, world.totalSegments);
   }
-
-  for (const wall of world.leftWallSegments) {
-    wall.position.z += moveSpeed;
-  }
-
-  for (const wall of world.rightWallSegments) {
-    wall.position.z += moveSpeed;
-  }
-
-  recycleSegments(
-    world.roadSegments,
-    world.segmentLength,
-    world.totalSegments
-  );
-
-  recycleSegments(
-    world.leftWallSegments,
-    world.segmentLength,
-    world.totalSegments
-  );
-
-  recycleSegments(
-    world.rightWallSegments,
-    world.segmentLength,
-    world.totalSegments
-  );
 }
