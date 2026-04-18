@@ -14,6 +14,19 @@ function createRoadMesh(scene, roadGeometry, roadMaterial, z) {
   return road;
 }
 
+function createSidewalkMesh(scene, sidewalkGeometry, sidewalkMaterial, x, z) {
+  const sidewalk = new THREE.Mesh(sidewalkGeometry, sidewalkMaterial);
+
+  const sidewalkCenterY =
+    WORLD_DEFAULTS.roadY - WORLD_DEFAULTS.sidewalkHeight / 2;
+
+  sidewalk.position.set(x, sidewalkCenterY, z);
+  sidewalk.receiveShadow = true;
+
+  scene.add(sidewalk);
+  return sidewalk;
+}
+
 function createSideMesh(scene, sideGeometry, sideMaterial, x, z) {
   const sideMesh = new THREE.Mesh(sideGeometry, sideMaterial);
 
@@ -28,15 +41,54 @@ function createSideMesh(scene, sideGeometry, sideMaterial, x, z) {
   return sideMesh;
 }
 
-function createWorldSegment(scene, roadGeometry, roadMaterial, sideGeometry, sideMaterial, index) {
+function createBuildingMaterial(textures, segmentIndex, sideSign) {
+  const textureIndex =
+    (segmentIndex + (sideSign > 0 ? 1 : 0)) % textures.buildingTextures.length;
+
+  return new THREE.MeshLambertMaterial({
+    map: textures.buildingTextures[textureIndex],
+    color: 0xffffff,
+    side: THREE.DoubleSide,
+  });
+}
+
+function createWorldSegment(
+  scene,
+  textures,
+  roadGeometry,
+  roadMaterial,
+  sidewalkGeometry,
+  sidewalkMaterial,
+  sideGeometry,
+  index
+) {
   const z = -index * WORLD_DEFAULTS.segmentLength;
 
   const road = createRoadMesh(scene, roadGeometry, roadMaterial, z);
 
+  const leftSidewalk = createSidewalkMesh(
+    scene,
+    sidewalkGeometry,
+    sidewalkMaterial,
+    -WORLD_DEFAULTS.sidewalkOffset,
+    z
+  );
+
+  const rightSidewalk = createSidewalkMesh(
+    scene,
+    sidewalkGeometry,
+    sidewalkMaterial,
+    WORLD_DEFAULTS.sidewalkOffset,
+    z
+  );
+
+  const leftSideMaterial = createBuildingMaterial(textures, index, -1);
+  const rightSideMaterial = createBuildingMaterial(textures, index, 1);
+
   const leftSide = createSideMesh(
     scene,
     sideGeometry,
-    sideMaterial,
+    leftSideMaterial,
     -WORLD_DEFAULTS.wallOffset,
     z
   );
@@ -44,7 +96,7 @@ function createWorldSegment(scene, roadGeometry, roadMaterial, sideGeometry, sid
   const rightSide = createSideMesh(
     scene,
     sideGeometry,
-    sideMaterial,
+    rightSideMaterial,
     WORLD_DEFAULTS.wallOffset,
     z
   );
@@ -53,6 +105,8 @@ function createWorldSegment(scene, roadGeometry, roadMaterial, sideGeometry, sid
     index,
     z,
     road,
+    leftSidewalk,
+    rightSidewalk,
     leftSide,
     rightSide,
   };
@@ -64,15 +118,19 @@ export function createWorld(scene, textures) {
     color: 0xffffff,
   });
 
-  const sideMaterial = new THREE.MeshLambertMaterial({
-    map: textures.wallTexture,
-    color: 0xffffff,
-    side: THREE.DoubleSide,
+  const sidewalkMaterial = new THREE.MeshLambertMaterial({
+    color: 0x9a9a9a,
   });
 
   const roadGeometry = new THREE.BoxGeometry(
     WORLD_DEFAULTS.roadVisualWidth,
     WORLD_DEFAULTS.roadThickness,
+    WORLD_DEFAULTS.segmentLength
+  );
+
+  const sidewalkGeometry = new THREE.BoxGeometry(
+    WORLD_DEFAULTS.sidewalkWidth,
+    WORLD_DEFAULTS.sidewalkHeight,
     WORLD_DEFAULTS.segmentLength
   );
 
@@ -88,10 +146,12 @@ export function createWorld(scene, textures) {
     segments.push(
       createWorldSegment(
         scene,
+        textures,
         roadGeometry,
         roadMaterial,
+        sidewalkGeometry,
+        sidewalkMaterial,
         sideGeometry,
-        sideMaterial,
         i
       )
     );

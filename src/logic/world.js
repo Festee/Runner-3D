@@ -3,6 +3,8 @@ import { WORLD_DEFAULTS } from '../core/worldConstants.js';
 function syncSegmentZ(segment, z) {
   segment.z = z;
   segment.road.position.z = z;
+  segment.leftSidewalk.position.z = z;
+  segment.rightSidewalk.position.z = z;
   segment.leftSide.position.z = z;
   segment.rightSide.position.z = z;
 }
@@ -19,7 +21,6 @@ export function updateWorld(state, world, textures) {
   const moveSpeed = state.speed * WORLD_DEFAULTS.scrollSpeedMultiplier;
 
   textures.groundTexture.offset.y -= state.speed;
-  textures.wallTexture.offset.y -= state.speed * 0.35;
 
   for (const segment of world.segments) {
     syncSegmentZ(segment, segment.z + moveSpeed);

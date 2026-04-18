@@ -1,39 +1,65 @@
 import * as THREE from 'https://unpkg.com/three@0.183.2/build/three.module.js';
 
+function configureGroundTexture(texture) {
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1, 20);
+  texture.magFilter = THREE.LinearFilter;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.colorSpace = THREE.SRGBColorSpace;
+}
+
+function configureBuildingTexture(texture) {
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.repeat.set(1, 1);
+  texture.offset.set(0, 0);
+  texture.magFilter = THREE.LinearFilter;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.colorSpace = THREE.SRGBColorSpace;
+}
+
 export function loadWorldTextures() {
   const loader = new THREE.TextureLoader();
 
   const groundTexture = loader.load(
-    './src/assets/Ground.png',
+    './src/assets/road.avif',
     (tex) => {
-      tex.wrapS = THREE.RepeatWrapping;
-      tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(1, 20);
-      tex.magFilter = THREE.LinearFilter;
-      tex.minFilter = THREE.LinearMipmapLinearFilter;
-      tex.colorSpace = THREE.SRGBColorSpace;
+      configureGroundTexture(tex);
     },
     undefined,
-    () => console.warn('Ground.png not found')
+    () => console.warn('road.avif not found')
   );
 
-  const wallTexture = loader.load(
-    './src/assets/Wall.png',
-    (tex) => {
-      tex.wrapS = THREE.RepeatWrapping;
-      tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(1, 40);
-      tex.offset.y = 0;
-      tex.magFilter = THREE.LinearFilter;
-      tex.minFilter = THREE.LinearMipmapLinearFilter;
-      tex.colorSpace = THREE.SRGBColorSpace;
-    },
-    undefined,
-    () => console.warn('Wall.png not found')
-  );
+  const buildingTextures = [
+    loader.load(
+      './src/assets/Building1.avif',
+      (tex) => {
+        configureBuildingTexture(tex);
+      },
+      undefined,
+      () => console.warn('Building1.avif not found')
+    ),
+    loader.load(
+      './src/assets/Building2.avif',
+      (tex) => {
+        configureBuildingTexture(tex);
+      },
+      undefined,
+      () => console.warn('Building2.avif not found')
+    ),
+    loader.load(
+      './src/assets/Building3.avif',
+      (tex) => {
+        configureBuildingTexture(tex);
+      },
+      undefined,
+      () => console.warn('Building3.avif not found')
+    ),
+  ];
 
   return {
     groundTexture,
-    wallTexture,
+    buildingTextures,
   };
 }
