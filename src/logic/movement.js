@@ -1,7 +1,13 @@
 import { PLAYER_DEFAULTS } from '../core/constants.js';
 import { getPlayerTargetX } from '../entities/player.js';
+import { canPlayerMove } from './playerStateTransitions.js';
 
 export function updatePlayerMovement(player) {
+  // Only process movement if player is alive
+  if (!canPlayerMove(player)) {
+    return;
+  }
+
   // Smooth lane interpolation towards target lane
   if (player.lane !== player.targetLane) {
     player.lane += (player.targetLane - player.lane) * PLAYER_DEFAULTS.laneLerpFactor;
