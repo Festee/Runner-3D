@@ -1,3 +1,5 @@
+import { PLAYER_DEFAULTS } from './constants.js';
+
 export function setupPlayerInput(state) {
   window.addEventListener('keydown', (e) => {
     if (!state.started || state.gameOver) return;
@@ -12,7 +14,7 @@ export function setupPlayerInput(state) {
 
     if ((e.code === 'Space' || e.code === 'ArrowUp') && !state.player.isJumping) {
       state.player.isJumping = true;
-      state.player.jumpVelocity = 0.16;
+      state.player.jumpVelocity = PLAYER_DEFAULTS.jumpStrength;
     }
   });
 }

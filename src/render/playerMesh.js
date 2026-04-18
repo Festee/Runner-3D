@@ -18,6 +18,8 @@ export function createPlayerMesh() {
     PLAYER_DEFAULTS.y,
     PLAYER_DEFAULTS.z
   );
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
 
   return mesh;
 }
