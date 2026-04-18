@@ -4,12 +4,15 @@ export function setupPlayerInput(state) {
   window.addEventListener('keydown', (e) => {
     if (!state.started || state.gameOver) return;
 
-    if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
-      state.player.lane = Math.max(-1, state.player.lane - 1);
-    }
+    // Lane switching only when alive
+    if (state.player.status === 'alive') {
+      if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+        state.player.targetLane = Math.max(-1, state.player.targetLane - 1);
+      }
 
-    if (e.code === 'ArrowRight' || e.code === 'KeyD') {
-      state.player.lane = Math.min(1, state.player.lane + 1);
+      if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+        state.player.targetLane = Math.min(1, state.player.targetLane + 1);
+      }
     }
 
     if ((e.code === 'Space' || e.code === 'ArrowUp') && !state.player.isJumping && !state.player.isLowering) {

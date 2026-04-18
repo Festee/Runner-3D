@@ -237,6 +237,7 @@ function startGame() {
   state.speed = 0.010;
 
   state.player.lane = 0;
+  state.player.targetLane = 0;
   state.player.x = 0;
   state.player.y = 0.2;
   state.player.z = 3;
@@ -244,6 +245,7 @@ function startGame() {
   state.player.jumpVelocity = 0;
   state.player.isLowering = false;
   state.player.lowerVelocity = 0;
+  state.player.status = 'alive';
 
   syncPlayerMesh(playerMesh, state.player);
 
@@ -325,6 +327,7 @@ function updateObstacles() {
       }
       
       if (collision) {
+        state.player.status = 'dead';
         showGameOver();
       }
     }

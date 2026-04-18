@@ -2,7 +2,12 @@ import { PLAYER_DEFAULTS } from '../core/constants.js';
 import { getPlayerTargetX } from '../entities/player.js';
 
 export function updatePlayerMovement(player) {
-  const targetX = getPlayerTargetX(player.lane);
+  // Smooth lane interpolation towards target lane
+  if (player.lane !== player.targetLane) {
+    player.lane += (player.targetLane - player.lane) * PLAYER_DEFAULTS.laneLerpFactor;
+  }
+
+  const targetX = getPlayerTargetX(player.targetLane);
 
   player.x += (targetX - player.x) * PLAYER_DEFAULTS.laneLerpFactor;
 
