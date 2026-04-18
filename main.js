@@ -5,9 +5,12 @@ import { setupPlayerInput } from './src/core/inputState.js';
 
 import { updatePlayerMovement } from './src/logic/movement.js';
 import { updateWorld } from './src/logic/world.js';
+import { markPlayerHit } from './src/logic/playerStateTransitions.js';
+import { createKnockbackState, startKnockback, updateKnockback, isKnockbackActive } from './src/logic/knockback.js';
 
 import { createPlayerMesh, syncPlayerMesh } from './src/render/playerMesh.js';
 import { createCamera, updateCamera, resizeCamera } from './src/render/camera.js';
+import { createCameraShake, startCameraShake, updateCameraShake } from './src/render/cameraEffects.js';
 import { createScene } from './src/render/scene.js';
 import { createLights } from './src/render/lights.js';
 import { loadWorldTextures } from './src/render/textures.js';
@@ -17,6 +20,11 @@ import { createScoreHud, updateScoreHud } from './src/ui/hud.js';
 // state
 const state = createInitialGameState();
 const lanePositions = [-1.8, 0, 1.8];
+
+// effects
+const cameraShake = createCameraShake();
+const knockback = createKnockbackState();
+let cameraBasePosition = { x: 0, y: 3, z: 8 };
 
 // scene
 const scene = createScene();
@@ -247,6 +255,10 @@ function startGame() {
   state.player.lowerVelocity = 0;
   state.player.status = 'alive';
 
+  // Reset effects
+  cameraShake.isActive = false;
+  knockback.isActive = false;
+
   syncPlayerMesh(playerMesh, state.player);
 
   obstacles.forEach((obstacle, index) => {
@@ -327,7 +339,17 @@ function updateObstacles() {
       }
       
       if (collision) {
-        state.player.status = 'dead';
+        markPlayerHit(state.player);
+        state.gameOver = true;
+        
+        // Determine knockback direction based on obstacle position
+        const knockbackDirection = obstacle.mesh.position.x > state.player.x ? 1 : -1;
+        
+        // Start knockback and camera shake effects
+        startKnockback(knockback, state.player, knockbackDirection, 1.0, 24);
+        startCameraShake(cameraShake, 0.35, 12);
+        
+        // Show game over screen immediately
         showGameOver();
       }
     }
@@ -347,6 +369,11 @@ function animate() {
   requestAnimationFrame(animate);
 
   if (state.started && !state.gameOver) {
+    // Apply knockback effect if active
+    if (isKnockbackActive(knockback)) {
+      updateKnockback(knockback, state.player);
+    }
+
     updatePlayerMovement(state.player);
     syncPlayerMesh(playerMesh, state.player);
 
@@ -355,7 +382,17 @@ function animate() {
     updateScore();
   }
 
+  // Update camera position normally
   updateCamera(camera, state.player);
+  
+  // Store base position for camera shake
+  cameraBasePosition.x = camera.position.x;
+  cameraBasePosition.y = camera.position.y;
+  cameraBasePosition.z = camera.position.z;
+  
+  // Apply camera shake if active
+  updateCameraShake(cameraShake, camera, cameraBasePosition);
+
   renderer.render(scene, camera);
 }
 
