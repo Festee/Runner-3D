@@ -2,10 +2,10 @@ import * as THREE from 'https://unpkg.com/three@0.183.2/build/three.module.js';
 
 import {
   createInitialGameState,
-  resetRunState,
   attachRuntimeState,
   setGamePhase,
 } from './src/core/gameState.js';
+import { initializeRun } from './src/core/runLifecycle.js';
 import { setupPlayerInput } from './src/core/inputState.js';
 import { updateGameplay } from './src/core/updateGame.js';
 
@@ -18,7 +18,7 @@ import { createScene } from './src/render/scene.js';
 import { createLights } from './src/render/lights.js';
 import { loadWorldTextures } from './src/render/textures.js';
 import { createWorld } from './src/render/worldMesh.js';
-import { createObstacleMeshes, replaceObstacleMesh, syncObstacleMesh } from './src/render/meshes.js';
+import { createObstacleMeshes } from './src/render/meshes.js';
 import { syncGameplayScene } from './src/render/syncScene.js';
 
 import { createScoreHud, updateScoreHud } from './src/ui/hud.js';
@@ -30,7 +30,6 @@ import {
 } from './src/ui/gameOver.js';
 
 import { createInitialObstacles } from './src/entities/obstacles.js';
-import { resetObstaclesForStart } from './src/logic/spawning.js';
 
 // state
 const state = createInitialGameState();
@@ -89,36 +88,12 @@ function renderStartScreen() {
   showStartScreen(overlay, state.highScore, startGame);
 }
 
-function resetEffects() {
-  state.effects.cameraShake.isActive = false;
-  state.effects.knockback.isActive = false;
-}
-
-function resetObstacleMeshes() {
-  const resetResults = resetObstaclesForStart(state.entities.obstacles);
-
-  resetResults.forEach((result, index) => {
-    if (result.typeChanged) {
-      obstacleMeshes[index] = replaceObstacleMesh(
-        scene,
-        obstacleMeshes[index],
-        state.entities.obstacles[index]
-      );
-    } else {
-      syncObstacleMesh(obstacleMeshes[index], state.entities.obstacles[index]);
-    }
-  });
-}
-
-function initializeRun() {
-  resetRunState(state);
-  resetEffects();
-  resetObstacleMeshes();
-  updateScoreHud(scoreHud, state.score, state.highScore);
-}
-
 function startGame() {
-  initializeRun();
+  initializeRun(state, {
+    scene,
+    obstacleMeshes,
+    scoreHud,
+  });
   hideOverlay(overlay);
 }
 
