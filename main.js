@@ -2,25 +2,23 @@ import * as THREE from 'https://unpkg.com/three@0.183.2/build/three.module.js';
 
 import { createInitialGameState, resetRunState } from './src/core/gameState.js';
 import { setupPlayerInput } from './src/core/inputState.js';
+import { updateGameplay } from './src/core/updateGame.js';
 
-import { updatePlayerMovement } from './src/logic/movement.js';
-import { updateWorld } from './src/logic/world.js';
-import { createKnockbackState, updateKnockback, isKnockbackActive } from './src/logic/knockback.js';
-import { updateObstacles, resetObstaclesForStart } from './src/logic/spawning.js';
-import { checkAndResolveObstacleCollision } from './src/logic/collisions.js';
-import { updateScore } from './src/logic/scoring.js';
+import { createKnockbackState } from './src/logic/knockback.js';
 
-import { createPlayerMesh, syncPlayerMesh } from './src/render/playerMesh.js';
-import { createCamera, updateCamera, resizeCamera } from './src/render/camera.js';
-import { createCameraShake, updateCameraShake } from './src/render/cameraEffects.js';
+import { createPlayerMesh } from './src/render/playerMesh.js';
+import { createCamera, resizeCamera } from './src/render/camera.js';
+import { createCameraShake } from './src/render/cameraEffects.js';
 import { createScene } from './src/render/scene.js';
 import { createLights } from './src/render/lights.js';
 import { loadWorldTextures } from './src/render/textures.js';
 import { createWorld } from './src/render/worldMesh.js';
 import { createObstacleMeshes, replaceObstacleMesh, syncObstacleMesh } from './src/render/meshes.js';
+import { syncGameplayScene } from './src/render/syncScene.js';
 import { createScoreHud, updateScoreHud } from './src/ui/hud.js';
 
 import { createInitialObstacles } from './src/entities/obstacles.js';
+import { resetObstaclesForStart } from './src/logic/spawning.js';
 
 // state
 const state = createInitialGameState();
@@ -114,7 +112,6 @@ function initializeRun() {
   resetRunState(state);
   resetEffects();
   resetObstacleMeshes();
-  syncPlayerMesh(playerMesh, state.player);
   updateScoreHud(scoreHud, state.score);
 }
 
@@ -147,51 +144,44 @@ function animate() {
   requestAnimationFrame(animate);
 
   if (state.started && !state.gameOver) {
-    // Apply knockback effect if active
-    if (isKnockbackActive(knockback)) {
-      updateKnockback(knockback, state.player);
-    }
-
-    updatePlayerMovement(state.player);
-    syncPlayerMesh(playerMesh, state.player);
-
-    updateWorld(state, world, textures);
-
-    const respawnedIndices = updateObstacles(state, obstacles);
-
-    for (let i = 0; i < obstacles.length; i++) {
-      if (respawnedIndices.includes(i)) {
-        obstacleMeshes[i] = replaceObstacleMesh(scene, obstacleMeshes[i], obstacles[i]);
-      } else {
-        syncObstacleMesh(obstacleMeshes[i], obstacles[i]);
-      }
-    }
-
-    const hitObstacle = checkAndResolveObstacleCollision(
-      state,
+    const gameplayResult = updateGameplay(state, {
+      world,
+      textures,
       obstacles,
       knockback,
-      cameraShake
-    );
+      cameraShake,
+    });
 
-    if (hitObstacle) {
+    syncGameplayScene(state, {
+      scene,
+      playerMesh,
+      obstacleMeshes,
+      obstacles,
+      respawnedIndices: gameplayResult.respawnedIndices,
+      camera,
+      cameraShake,
+      cameraBasePosition,
+    });
+
+    if (gameplayResult.hitObstacle) {
       showGameOver();
-    } else {
-      const scoreResult = updateScore(state);
-      updateScoreHud(scoreHud, scoreResult.score);
     }
-  }
 
-  // Update camera position normally
-  updateCamera(camera, state.player);
-  
-  // Store base position for camera shake
-  cameraBasePosition.x = camera.position.x;
-  cameraBasePosition.y = camera.position.y;
-  cameraBasePosition.z = camera.position.z;
-  
-  // Apply camera shake if active
-  updateCameraShake(cameraShake, camera, cameraBasePosition);
+    if (gameplayResult.scoreResult) {
+      updateScoreHud(scoreHud, gameplayResult.scoreResult.score);
+    }
+  } else {
+    syncGameplayScene(state, {
+      scene,
+      playerMesh,
+      obstacleMeshes,
+      obstacles,
+      respawnedIndices: [],
+      camera,
+      cameraShake,
+      cameraBasePosition,
+    });
+  }
 
   renderer.render(scene, camera);
 }
