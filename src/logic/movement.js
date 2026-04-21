@@ -14,7 +14,6 @@ export function updatePlayerMovement(player) {
   }
 
   const targetX = getPlayerTargetX(player.targetLane);
-
   player.x += (targetX - player.x) * PLAYER_DEFAULTS.laneLerpFactor;
 
   if (player.isJumping) {
@@ -28,12 +27,25 @@ export function updatePlayerMovement(player) {
     }
   } else if (player.isLowering) {
     player.y += player.lowerVelocity;
-    player.lowerVelocity -= player.gravity;
 
     if (player.y <= PLAYER_DEFAULTS.lowerY) {
       player.y = PLAYER_DEFAULTS.lowerY;
       player.isLowering = false;
       player.lowerVelocity = 0;
+      player.lowerTimer = PLAYER_DEFAULTS.lowerHoldFrames;
+      player.isRecoveringFromLower = true;
+    }
+  } else if (player.isRecoveringFromLower) {
+    if (player.lowerTimer > 0) {
+      player.lowerTimer -= 1;
+    } else {
+      player.y += PLAYER_DEFAULTS.lowerRecoverSpeed;
+
+      if (player.y >= PLAYER_DEFAULTS.groundY) {
+        player.y = PLAYER_DEFAULTS.groundY;
+        player.isRecoveringFromLower = false;
+        player.lowerTimer = 0;
+      }
     }
   }
 }

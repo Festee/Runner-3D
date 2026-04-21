@@ -10,7 +10,9 @@ export function createInitialPlayerState() {
     isJumping: PLAYER_DEFAULTS.isJumping,
     jumpVelocity: PLAYER_DEFAULTS.jumpVelocity,
     isLowering: PLAYER_DEFAULTS.isLowering,
+    isRecoveringFromLower: PLAYER_DEFAULTS.isRecoveringFromLower,
     lowerVelocity: PLAYER_DEFAULTS.lowerVelocity,
+    lowerTimer: PLAYER_DEFAULTS.lowerTimer,
     gravity: PLAYER_DEFAULTS.gravity,
     status: 'alive',
   };

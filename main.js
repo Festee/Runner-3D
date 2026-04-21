@@ -1,6 +1,11 @@
 import * as THREE from 'https://unpkg.com/three@0.183.2/build/three.module.js';
 
-import { createInitialGameState, resetRunState } from './src/core/gameState.js';
+import {
+  createInitialGameState,
+  resetRunState,
+  attachRuntimeState,
+  setGamePhase,
+} from './src/core/gameState.js';
 import { setupPlayerInput } from './src/core/inputState.js';
 import { updateGameplay } from './src/core/updateGame.js';
 
@@ -15,7 +20,14 @@ import { loadWorldTextures } from './src/render/textures.js';
 import { createWorld } from './src/render/worldMesh.js';
 import { createObstacleMeshes, replaceObstacleMesh, syncObstacleMesh } from './src/render/meshes.js';
 import { syncGameplayScene } from './src/render/syncScene.js';
+
 import { createScoreHud, updateScoreHud } from './src/ui/hud.js';
+import {
+  createOverlay,
+  showStartScreen,
+  showGameOverScreen,
+  hideOverlay,
+} from './src/ui/gameOver.js';
 
 import { createInitialObstacles } from './src/entities/obstacles.js';
 import { resetObstaclesForStart } from './src/logic/spawning.js';
@@ -60,50 +72,40 @@ scene.add(playerMesh);
 const obstacles = createInitialObstacles();
 const obstacleMeshes = createObstacleMeshes(scene, obstacles);
 
-// UI
-const overlay = document.createElement('div');
-overlay.style.position = 'fixed';
-overlay.style.inset = '0';
-overlay.style.display = 'flex';
-overlay.style.justifyContent = 'center';
-overlay.style.alignItems = 'center';
-overlay.style.background = 'rgba(0,0,0,0.35)';
-overlay.style.zIndex = '10';
+// attach gameplay runtime refs into state
+attachRuntimeState(state, {
+  world,
+  obstacles,
+  cameraShake,
+  knockback,
+});
 
+// UI
+const overlay = createOverlay();
 const scoreHud = createScoreHud();
 
-document.body.appendChild(overlay);
-
 function renderStartScreen() {
-  overlay.style.display = 'flex';
-  overlay.innerHTML = `
-    <div style="text-align:center; color:white; background:#000000c7; padding:30px; border-radius:16px; min-width:280px; font-family:Arial,sans-serif;">
-      <h1 style="margin-top:0;">Runner 3D</h1>
-      <p>Press Start to begin</p>
-      <p>Move: A / D or ← / →</p>
-      <p>Jump: Space or ↑</p>
-      <p>Lower: ↓</p>
-      <p>High Score: ${state.highScore}</p>
-      <button id="start-btn" style="font-size:18px; padding:12px 24px; cursor:pointer;">Start</button>
-    </div>
-  `;
-
-  document.getElementById('start-btn').addEventListener('click', startGame);
+  setGamePhase(state, 'start');
+  showStartScreen(overlay, state.highScore, startGame);
 }
 
 function resetEffects() {
-  cameraShake.isActive = false;
-  knockback.isActive = false;
+  state.effects.cameraShake.isActive = false;
+  state.effects.knockback.isActive = false;
 }
 
 function resetObstacleMeshes() {
-  const resetResults = resetObstaclesForStart(obstacles);
+  const resetResults = resetObstaclesForStart(state.entities.obstacles);
 
   resetResults.forEach((result, index) => {
     if (result.typeChanged) {
-      obstacleMeshes[index] = replaceObstacleMesh(scene, obstacleMeshes[index], obstacles[index]);
+      obstacleMeshes[index] = replaceObstacleMesh(
+        scene,
+        obstacleMeshes[index],
+        state.entities.obstacles[index]
+      );
     } else {
-      syncObstacleMesh(obstacleMeshes[index], obstacles[index]);
+      syncObstacleMesh(obstacleMeshes[index], state.entities.obstacles[index]);
     }
   });
 }
@@ -117,22 +119,12 @@ function initializeRun() {
 
 function startGame() {
   initializeRun();
-  overlay.style.display = 'none';
+  hideOverlay(overlay);
 }
 
 function showGameOver() {
-  state.gameOver = true;
-  overlay.style.display = 'flex';
-  overlay.innerHTML = `
-    <div style="text-align:center; color:white; background:#000000c7; padding:30px; border-radius:16px; min-width:280px; font-family:Arial,sans-serif;">
-      <h1 style="margin-top:0;">Game Over</h1>
-      <p>Your score: ${state.score}</p>
-      <p>High Score: ${state.highScore}</p>
-      <button id="restart-btn" style="font-size:18px; padding:12px 24px; cursor:pointer;">Restart</button>
-    </div>
-  `;
-
-  document.getElementById('restart-btn').addEventListener('click', renderStartScreen);
+  setGamePhase(state, 'gameOver');
+  showGameOverScreen(overlay, state.score, state.highScore, renderStartScreen);
 }
 
 renderStartScreen();
@@ -143,24 +135,24 @@ setupPlayerInput(state);
 function animate() {
   requestAnimationFrame(animate);
 
-  if (state.started && !state.gameOver) {
+  if (state.phase === 'running') {
     const gameplayResult = updateGameplay(state, {
-      world,
+      world: state.entities.world,
       textures,
-      obstacles,
-      knockback,
-      cameraShake,
+      obstacles: state.entities.obstacles,
+      knockback: state.effects.knockback,
+      cameraShake: state.effects.cameraShake,
     });
 
     syncGameplayScene(state, {
       scene,
-      world,
+      world: state.entities.world,
       playerMesh,
       obstacleMeshes,
-      obstacles,
+      obstacles: state.entities.obstacles,
       respawnedIndices: gameplayResult.respawnedIndices,
       camera,
-      cameraShake,
+      cameraShake: state.effects.cameraShake,
       cameraBasePosition,
     });
 
@@ -174,13 +166,13 @@ function animate() {
   } else {
     syncGameplayScene(state, {
       scene,
-      world,
+      world: state.entities.world,
       playerMesh,
       obstacleMeshes,
-      obstacles,
+      obstacles: state.entities.obstacles,
       respawnedIndices: [],
       camera,
-      cameraShake,
+      cameraShake: state.effects.cameraShake,
       cameraBasePosition,
     });
   }

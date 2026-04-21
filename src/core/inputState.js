@@ -29,7 +29,9 @@ export function setupPlayerInput(state) {
     // Lower - check if player can lower
     if (e.code === 'ArrowDown' && canPlayerLower(state.player)) {
       state.player.isLowering = true;
+      state.player.isRecoveringFromLower = false;
       state.player.lowerVelocity = -PLAYER_DEFAULTS.lowerStrength;
+      state.player.lowerTimer = PLAYER_DEFAULTS.lowerHoldFrames;
     }
   });
 }
