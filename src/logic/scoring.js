@@ -1,3 +1,5 @@
+import { saveHighScore } from '../core/gameState.js';
+
 const SCORE_STEP = 1;
 const SPEED_INCREASE_INTERVAL = 900;
 const SPEED_INCREASE_AMOUNT = 0.001;
@@ -7,6 +9,7 @@ export function updateScore(state) {
 
   if (state.score > state.highScore) {
     state.highScore = state.score;
+    saveHighScore(state.highScore);
   }
 
   if (state.score % SPEED_INCREASE_INTERVAL === 0) {

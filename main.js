@@ -114,7 +114,7 @@ function initializeRun() {
   resetRunState(state);
   resetEffects();
   resetObstacleMeshes();
-  updateScoreHud(scoreHud, state.score);
+  updateScoreHud(scoreHud, state.score, state.highScore);
 }
 
 function startGame() {
@@ -161,7 +161,11 @@ function animate() {
     }
 
     if (gameplayResult.scoreResult) {
-      updateScoreHud(scoreHud, gameplayResult.scoreResult.score);
+      updateScoreHud(
+        scoreHud,
+        gameplayResult.scoreResult.score,
+        gameplayResult.scoreResult.highScore
+      );
     }
   } else {
     syncGameplayScene(state, {

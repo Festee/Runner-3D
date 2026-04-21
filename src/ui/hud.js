@@ -10,12 +10,19 @@ export function createScoreHud() {
   scoreHud.style.fontSize = '18px';
   scoreHud.style.borderRadius = '10px';
   scoreHud.style.zIndex = '5';
-  scoreHud.textContent = 'Score: 0';
+  scoreHud.style.lineHeight = '1.5';
+  scoreHud.innerHTML = `
+    <div>Score: 0</div>
+    <div>High Score: 0</div>
+  `;
 
   document.body.appendChild(scoreHud);
   return scoreHud;
 }
 
-export function updateScoreHud(scoreHud, score) {
-  scoreHud.textContent = `Score: ${score}`;
+export function updateScoreHud(scoreHud, score, highScore) {
+  scoreHud.innerHTML = `
+    <div>Score: ${score}</div>
+    <div>High Score: ${highScore}</div>
+  `;
 }

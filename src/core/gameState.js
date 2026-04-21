@@ -1,13 +1,29 @@
 import { createInitialPlayerState } from '../entities/player.js';
 
 const INITIAL_SPEED = 0.010;
+const HIGH_SCORE_STORAGE_KEY = 'runner3d_high_score';
+
+function loadHighScore() {
+  const storedValue = localStorage.getItem(HIGH_SCORE_STORAGE_KEY);
+  const parsedValue = Number(storedValue);
+
+  if (Number.isFinite(parsedValue) && parsedValue >= 0) {
+    return parsedValue;
+  }
+
+  return 0;
+}
+
+export function saveHighScore(highScore) {
+  localStorage.setItem(HIGH_SCORE_STORAGE_KEY, String(highScore));
+}
 
 export function createInitialGameState() {
   return {
     phase: 'start',
     started: false,
     score: 0,
-    highScore: 0,
+    highScore: loadHighScore(),
     gameOver: false,
     speed: INITIAL_SPEED,
     player: createInitialPlayerState(),
