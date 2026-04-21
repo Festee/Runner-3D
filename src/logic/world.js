@@ -1,19 +1,10 @@
 import { WORLD_DEFAULTS } from '../core/worldConstants.js';
 
-function syncSegmentZ(segment, z) {
-  segment.z = z;
-  segment.road.position.z = z;
-  segment.leftSidewalk.position.z = z;
-  segment.rightSidewalk.position.z = z;
-  segment.leftSide.position.z = z;
-  segment.rightSide.position.z = z;
-}
-
 function recycleSegment(segment, segmentLength, totalSegments) {
   const recycleLimit = segmentLength * (totalSegments - 1);
 
   if (segment.z > recycleLimit) {
-    syncSegmentZ(segment, segment.z - segmentLength * totalSegments);
+    segment.z -= segmentLength * totalSegments;
   }
 }
 
@@ -23,7 +14,7 @@ export function updateWorld(state, world, textures) {
   textures.groundTexture.offset.y -= state.speed;
 
   for (const segment of world.segments) {
-    syncSegmentZ(segment, segment.z + moveSpeed);
+    segment.z += moveSpeed;
     recycleSegment(segment, world.segmentLength, world.totalSegments);
   }
 }

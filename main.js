@@ -154,6 +154,7 @@ function animate() {
 
     syncGameplayScene(state, {
       scene,
+      world,
       playerMesh,
       obstacleMeshes,
       obstacles,
@@ -173,6 +174,7 @@ function animate() {
   } else {
     syncGameplayScene(state, {
       scene,
+      world,
       playerMesh,
       obstacleMeshes,
       obstacles,
