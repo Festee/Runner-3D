@@ -1,23 +1,33 @@
 import * as THREE from 'https://unpkg.com/three@0.183.2/build/three.module.js';
 
-import { createInitialGameState, resetRunState } from './src/core/gameState.js';
+import {
+  createInitialGameState,
+  attachRuntimeState,
+  setGamePhase,
+} from './src/core/gameState.js';
+import { initializeRun } from './src/core/runLifecycle.js';
 import { setupPlayerInput } from './src/core/inputState.js';
+import { updateGameplay } from './src/core/updateGame.js';
 
-import { updatePlayerMovement } from './src/logic/movement.js';
-import { updateWorld } from './src/logic/world.js';
-import { createKnockbackState, updateKnockback, isKnockbackActive } from './src/logic/knockback.js';
-import { updateObstacles, resetObstaclesForStart } from './src/logic/spawning.js';
-import { checkAndResolveObstacleCollision } from './src/logic/collisions.js';
+import { createKnockbackState } from './src/logic/knockback.js';
 
-import { createPlayerMesh, syncPlayerMesh } from './src/render/playerMesh.js';
-import { createCamera, updateCamera, resizeCamera } from './src/render/camera.js';
-import { createCameraShake, updateCameraShake } from './src/render/cameraEffects.js';
+import { createPlayerMesh } from './src/render/playerMesh.js';
+import { createCamera, resizeCamera } from './src/render/camera.js';
+import { createCameraShake } from './src/render/cameraEffects.js';
 import { createScene } from './src/render/scene.js';
 import { createLights } from './src/render/lights.js';
 import { loadWorldTextures } from './src/render/textures.js';
 import { createWorld } from './src/render/worldMesh.js';
-import { createObstacleMeshes, replaceObstacleMesh, syncObstacleMesh } from './src/render/meshes.js';
+import { createObstacleMeshes } from './src/render/meshes.js';
+import { syncGameplayScene } from './src/render/syncScene.js';
+
 import { createScoreHud, updateScoreHud } from './src/ui/hud.js';
+import {
+  createOverlay,
+  showStartScreen,
+  showGameOverScreen,
+  hideOverlay,
+} from './src/ui/gameOver.js';
 
 import { createInitialObstacles } from './src/entities/obstacles.js';
 
@@ -61,78 +71,35 @@ scene.add(playerMesh);
 const obstacles = createInitialObstacles();
 const obstacleMeshes = createObstacleMeshes(scene, obstacles);
 
-// UI
-const overlay = document.createElement('div');
-overlay.style.position = 'fixed';
-overlay.style.inset = '0';
-overlay.style.display = 'flex';
-overlay.style.justifyContent = 'center';
-overlay.style.alignItems = 'center';
-overlay.style.background = 'rgba(0,0,0,0.35)';
-overlay.style.zIndex = '10';
+// attach gameplay runtime refs into state
+attachRuntimeState(state, {
+  world,
+  obstacles,
+  cameraShake,
+  knockback,
+});
 
+// UI
+const overlay = createOverlay();
 const scoreHud = createScoreHud();
 
-document.body.appendChild(overlay);
-
 function renderStartScreen() {
-  overlay.style.display = 'flex';
-  overlay.innerHTML = `
-    <div style="text-align:center; color:white; background:#000000c7; padding:30px; border-radius:16px; min-width:280px; font-family:Arial,sans-serif;">
-      <h1 style="margin-top:0;">Runner 3D</h1>
-      <p>Press Start to begin</p>
-      <p>Move: A / D or ← / →</p>
-      <p>Jump: Space or ↑</p>
-      <p>Lower: ↓</p>
-      <button id="start-btn" style="font-size:18px; padding:12px 24px; cursor:pointer;">Start</button>
-    </div>
-  `;
-
-  document.getElementById('start-btn').addEventListener('click', startGame);
-}
-
-function resetEffects() {
-  cameraShake.isActive = false;
-  knockback.isActive = false;
-}
-
-function resetObstacleMeshes() {
-  const resetResults = resetObstaclesForStart(obstacles);
-
-  resetResults.forEach((result, index) => {
-    if (result.typeChanged) {
-      obstacleMeshes[index] = replaceObstacleMesh(scene, obstacleMeshes[index], obstacles[index]);
-    } else {
-      syncObstacleMesh(obstacleMeshes[index], obstacles[index]);
-    }
-  });
-}
-
-function initializeRun() {
-  resetRunState(state);
-  resetEffects();
-  resetObstacleMeshes();
-  syncPlayerMesh(playerMesh, state.player);
-  updateScoreHud(scoreHud, state.score);
+  setGamePhase(state, 'start');
+  showStartScreen(overlay, state.highScore, startGame);
 }
 
 function startGame() {
-  initializeRun();
-  overlay.style.display = 'none';
+  initializeRun(state, {
+    scene,
+    obstacleMeshes,
+    scoreHud,
+  });
+  hideOverlay(overlay);
 }
 
 function showGameOver() {
-  state.gameOver = true;
-  overlay.style.display = 'flex';
-  overlay.innerHTML = `
-    <div style="text-align:center; color:white; background:#000000c7; padding:30px; border-radius:16px; min-width:280px; font-family:Arial,sans-serif;">
-      <h1 style="margin-top:0;">Game Over</h1>
-      <p>Your score: ${state.score}</p>
-      <button id="restart-btn" style="font-size:18px; padding:12px 24px; cursor:pointer;">Restart</button>
-    </div>
-  `;
-
-  document.getElementById('restart-btn').addEventListener('click', renderStartScreen);
+  setGamePhase(state, 'gameOver');
+  showGameOverScreen(overlay, state.score, state.highScore, renderStartScreen);
 }
 
 renderStartScreen();
@@ -140,63 +107,54 @@ renderStartScreen();
 // input
 setupPlayerInput(state);
 
-function updateScore() {
-  state.score += 1;
-  updateScoreHud(scoreHud, state.score);
-
-  if (state.score % 900 === 0) {
-    state.speed += 0.001;
-  }
-}
-
 function animate() {
   requestAnimationFrame(animate);
 
-  if (state.started && !state.gameOver) {
-    // Apply knockback effect if active
-    if (isKnockbackActive(knockback)) {
-      updateKnockback(knockback, state.player);
-    }
+  if (state.phase === 'running') {
+    const gameplayResult = updateGameplay(state, {
+      world: state.entities.world,
+      textures,
+      obstacles: state.entities.obstacles,
+      knockback: state.effects.knockback,
+      cameraShake: state.effects.cameraShake,
+    });
 
-    updatePlayerMovement(state.player);
-    syncPlayerMesh(playerMesh, state.player);
+    syncGameplayScene(state, {
+      scene,
+      world: state.entities.world,
+      playerMesh,
+      obstacleMeshes,
+      obstacles: state.entities.obstacles,
+      respawnedIndices: gameplayResult.respawnedIndices,
+      camera,
+      cameraShake: state.effects.cameraShake,
+      cameraBasePosition,
+    });
 
-    updateWorld(state, world, textures);
-
-    const respawnedIndices = updateObstacles(state, obstacles);
-
-    for (let i = 0; i < obstacles.length; i++) {
-      if (respawnedIndices.includes(i)) {
-        obstacleMeshes[i] = replaceObstacleMesh(scene, obstacleMeshes[i], obstacles[i]);
-      } else {
-        syncObstacleMesh(obstacleMeshes[i], obstacles[i]);
-      }
-    }
-
-    const hitObstacle = checkAndResolveObstacleCollision(
-      state,
-      obstacles,
-      knockback,
-      cameraShake
-    );
-
-    if (hitObstacle) {
+    if (gameplayResult.hitObstacle) {
       showGameOver();
     }
 
-    updateScore();
+    if (gameplayResult.scoreResult) {
+      updateScoreHud(
+        scoreHud,
+        gameplayResult.scoreResult.score,
+        gameplayResult.scoreResult.highScore
+      );
+    }
+  } else {
+    syncGameplayScene(state, {
+      scene,
+      world: state.entities.world,
+      playerMesh,
+      obstacleMeshes,
+      obstacles: state.entities.obstacles,
+      respawnedIndices: [],
+      camera,
+      cameraShake: state.effects.cameraShake,
+      cameraBasePosition,
+    });
   }
-
-  // Update camera position normally
-  updateCamera(camera, state.player);
-  
-  // Store base position for camera shake
-  cameraBasePosition.x = camera.position.x;
-  cameraBasePosition.y = camera.position.y;
-  cameraBasePosition.z = camera.position.z;
-  
-  // Apply camera shake if active
-  updateCameraShake(cameraShake, camera, cameraBasePosition);
 
   renderer.render(scene, camera);
 }

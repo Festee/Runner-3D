@@ -52,7 +52,14 @@ function createBuildingMaterial(textures, segmentIndex, sideSign) {
   });
 }
 
-function createWorldSegment(
+function createWorldSegmentState(index) {
+  return {
+    index,
+    z: -index * WORLD_DEFAULTS.segmentLength,
+  };
+}
+
+function createWorldSegmentMeshes(
   scene,
   textures,
   roadGeometry,
@@ -60,9 +67,9 @@ function createWorldSegment(
   sidewalkGeometry,
   sidewalkMaterial,
   sideGeometry,
-  index
+  segment
 ) {
-  const z = -index * WORLD_DEFAULTS.segmentLength;
+  const z = segment.z;
 
   const road = createRoadMesh(scene, roadGeometry, roadMaterial, z);
 
@@ -82,8 +89,8 @@ function createWorldSegment(
     z
   );
 
-  const leftSideMaterial = createBuildingMaterial(textures, index, -1);
-  const rightSideMaterial = createBuildingMaterial(textures, index, 1);
+  const leftSideMaterial = createBuildingMaterial(textures, segment.index, -1);
+  const rightSideMaterial = createBuildingMaterial(textures, segment.index, 1);
 
   const leftSide = createSideMesh(
     scene,
@@ -102,8 +109,6 @@ function createWorldSegment(
   );
 
   return {
-    index,
-    z,
     road,
     leftSidewalk,
     rightSidewalk,
@@ -141,10 +146,14 @@ export function createWorld(scene, textures) {
   );
 
   const segments = [];
+  const segmentMeshes = [];
 
   for (let i = 0; i < WORLD_DEFAULTS.totalSegments; i++) {
-    segments.push(
-      createWorldSegment(
+    const segment = createWorldSegmentState(i);
+    segments.push(segment);
+
+    segmentMeshes.push(
+      createWorldSegmentMeshes(
         scene,
         textures,
         roadGeometry,
@@ -152,13 +161,14 @@ export function createWorld(scene, textures) {
         sidewalkGeometry,
         sidewalkMaterial,
         sideGeometry,
-        i
+        segment
       )
     );
   }
 
   return {
     segments,
+    segmentMeshes,
     segmentLength: WORLD_DEFAULTS.segmentLength,
     totalSegments: WORLD_DEFAULTS.totalSegments,
   };

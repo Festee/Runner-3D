@@ -10,7 +10,9 @@ export function createInitialPlayerState() {
     isJumping: PLAYER_DEFAULTS.isJumping,
     jumpVelocity: PLAYER_DEFAULTS.jumpVelocity,
     isLowering: PLAYER_DEFAULTS.isLowering,
+    isRecoveringFromLower: PLAYER_DEFAULTS.isRecoveringFromLower,
     lowerVelocity: PLAYER_DEFAULTS.lowerVelocity,
+    lowerTimer: PLAYER_DEFAULTS.lowerTimer,
     gravity: PLAYER_DEFAULTS.gravity,
     status: 'alive',
   };
@@ -18,4 +20,9 @@ export function createInitialPlayerState() {
 
 export function getPlayerTargetX(lane) {
   return LANE_POSITIONS[lane + 1];
+}
+
+export function isPlayerNearLaneTarget(player, threshold = 0.05) {
+  const targetX = getPlayerTargetX(player.targetLane);
+  return Math.abs(player.x - targetX) <= threshold;
 }
