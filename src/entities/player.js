@@ -21,3 +21,8 @@ export function createInitialPlayerState() {
 export function getPlayerTargetX(lane) {
   return LANE_POSITIONS[lane + 1];
 }
+
+export function isPlayerNearLaneTarget(player, threshold = 0.05) {
+  const targetX = getPlayerTargetX(player.targetLane);
+  return Math.abs(player.x - targetX) <= threshold;
+}
