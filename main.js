@@ -8,6 +8,7 @@ import { updateWorld } from './src/logic/world.js';
 import { createKnockbackState, updateKnockback, isKnockbackActive } from './src/logic/knockback.js';
 import { updateObstacles, resetObstaclesForStart } from './src/logic/spawning.js';
 import { checkAndResolveObstacleCollision } from './src/logic/collisions.js';
+import { updateScore } from './src/logic/scoring.js';
 
 import { createPlayerMesh, syncPlayerMesh } from './src/render/playerMesh.js';
 import { createCamera, updateCamera, resizeCamera } from './src/render/camera.js';
@@ -84,6 +85,7 @@ function renderStartScreen() {
       <p>Move: A / D or ← / →</p>
       <p>Jump: Space or ↑</p>
       <p>Lower: ↓</p>
+      <p>High Score: ${state.highScore}</p>
       <button id="start-btn" style="font-size:18px; padding:12px 24px; cursor:pointer;">Start</button>
     </div>
   `;
@@ -128,6 +130,7 @@ function showGameOver() {
     <div style="text-align:center; color:white; background:#000000c7; padding:30px; border-radius:16px; min-width:280px; font-family:Arial,sans-serif;">
       <h1 style="margin-top:0;">Game Over</h1>
       <p>Your score: ${state.score}</p>
+      <p>High Score: ${state.highScore}</p>
       <button id="restart-btn" style="font-size:18px; padding:12px 24px; cursor:pointer;">Restart</button>
     </div>
   `;
@@ -139,15 +142,6 @@ renderStartScreen();
 
 // input
 setupPlayerInput(state);
-
-function updateScore() {
-  state.score += 1;
-  updateScoreHud(scoreHud, state.score);
-
-  if (state.score % 900 === 0) {
-    state.speed += 0.001;
-  }
-}
 
 function animate() {
   requestAnimationFrame(animate);
@@ -182,9 +176,10 @@ function animate() {
 
     if (hitObstacle) {
       showGameOver();
+    } else {
+      const scoreResult = updateScore(state);
+      updateScoreHud(scoreHud, scoreResult.score);
     }
-
-    updateScore();
   }
 
   // Update camera position normally

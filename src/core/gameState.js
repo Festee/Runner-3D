@@ -6,6 +6,7 @@ export function createInitialGameState() {
   return {
     started: false,
     score: 0,
+    highScore: 0,
     gameOver: false,
     speed: INITIAL_SPEED,
     player: createInitialPlayerState(),
