@@ -1,6 +1,6 @@
 import * as THREE from 'https://unpkg.com/three@0.183.2/build/three.module.js';
 
-import { createInitialGameState } from './src/core/gameState.js';
+import { createInitialGameState, resetRunState } from './src/core/gameState.js';
 import { setupPlayerInput } from './src/core/inputState.js';
 
 import { updatePlayerMovement } from './src/logic/movement.js';
@@ -91,29 +91,12 @@ function renderStartScreen() {
   document.getElementById('start-btn').addEventListener('click', startGame);
 }
 
-function startGame() {
-  state.started = true;
-  state.gameOver = false;
-  state.score = 0;
-  state.speed = 0.010;
-
-  state.player.lane = 0;
-  state.player.targetLane = 0;
-  state.player.x = 0;
-  state.player.y = 0.2;
-  state.player.z = 3;
-  state.player.isJumping = false;
-  state.player.jumpVelocity = 0;
-  state.player.isLowering = false;
-  state.player.lowerVelocity = 0;
-  state.player.status = 'alive';
-
-  // Reset effects
+function resetEffects() {
   cameraShake.isActive = false;
   knockback.isActive = false;
+}
 
-  syncPlayerMesh(playerMesh, state.player);
-
+function resetObstacleMeshes() {
   const resetResults = resetObstaclesForStart(obstacles);
 
   resetResults.forEach((result, index) => {
@@ -123,8 +106,18 @@ function startGame() {
       syncObstacleMesh(obstacleMeshes[index], obstacles[index]);
     }
   });
+}
 
-  updateScoreHud(scoreHud, 0);
+function initializeRun() {
+  resetRunState(state);
+  resetEffects();
+  resetObstacleMeshes();
+  syncPlayerMesh(playerMesh, state.player);
+  updateScoreHud(scoreHud, state.score);
+}
+
+function startGame() {
+  initializeRun();
   overlay.style.display = 'none';
 }
 
