@@ -23,12 +23,12 @@ export function loadWorldTextures() {
   const loader = new THREE.TextureLoader();
 
   const groundTexture = loader.load(
-    './src/assets/road.avif',
+    './src/assets/Driving Basics.jpg',
     (tex) => {
       configureGroundTexture(tex);
     },
     undefined,
-    () => console.warn('road.avif not found')
+    () => console.warn('road.jpg not found')
   );
 
   const buildingTextures = [

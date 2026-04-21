@@ -11,8 +11,12 @@ export const PLAYER_DEFAULTS = {
   color: 0xb02a1d,
   isJumping: false,
   jumpVelocity: 0,
+  isLowering: false,
+  lowerVelocity: 0,
   gravity: 0.010,
   laneLerpFactor: 0.18,
-  jumpStrength: 0.16,
+  jumpStrength: 0.18,
+  lowerStrength: 0.12,
   groundY: 0.2,
+  lowerY: -0.05,
 };
