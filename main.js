@@ -5,14 +5,13 @@ import { setupPlayerInput } from './src/core/inputState.js';
 
 import { updatePlayerMovement } from './src/logic/movement.js';
 import { updateWorld } from './src/logic/world.js';
-import { markPlayerHit } from './src/logic/playerStateTransitions.js';
-import { createKnockbackState, startKnockback, updateKnockback, isKnockbackActive } from './src/logic/knockback.js';
+import { createKnockbackState, updateKnockback, isKnockbackActive } from './src/logic/knockback.js';
 import { updateObstacles, resetObstaclesForStart } from './src/logic/spawning.js';
-import { findFirstCollidingObstacle } from './src/logic/collisions.js';
+import { checkAndResolveObstacleCollision } from './src/logic/collisions.js';
 
 import { createPlayerMesh, syncPlayerMesh } from './src/render/playerMesh.js';
 import { createCamera, updateCamera, resizeCamera } from './src/render/camera.js';
-import { createCameraShake, startCameraShake, updateCameraShake } from './src/render/cameraEffects.js';
+import { createCameraShake, updateCameraShake } from './src/render/cameraEffects.js';
 import { createScene } from './src/render/scene.js';
 import { createLights } from './src/render/lights.js';
 import { loadWorldTextures } from './src/render/textures.js';
@@ -181,19 +180,14 @@ function animate() {
       }
     }
 
-    const hitObstacle = findFirstCollidingObstacle(state.player, obstacles);
+    const hitObstacle = checkAndResolveObstacleCollision(
+      state,
+      obstacles,
+      knockback,
+      cameraShake
+    );
 
     if (hitObstacle) {
-      markPlayerHit(state.player);
-      state.gameOver = true;
-
-      const knockbackDirection = hitObstacle.x > state.player.x ? 1 : -1;
-
-      // Start knockback and camera shake effects
-      startKnockback(knockback, state.player, knockbackDirection, 1.0, 24);
-      startCameraShake(cameraShake, 0.35, 12);
-
-      // Show game over screen immediately
       showGameOver();
     }
 
