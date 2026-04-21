@@ -7,6 +7,8 @@ import { updatePlayerMovement } from './src/logic/movement.js';
 import { updateWorld } from './src/logic/world.js';
 import { markPlayerHit } from './src/logic/playerStateTransitions.js';
 import { createKnockbackState, startKnockback, updateKnockback, isKnockbackActive } from './src/logic/knockback.js';
+import { updateObstacles, resetObstaclesForStart } from './src/logic/spawning.js';
+import { findFirstCollidingObstacle } from './src/logic/collisions.js';
 
 import { createPlayerMesh, syncPlayerMesh } from './src/render/playerMesh.js';
 import { createCamera, updateCamera, resizeCamera } from './src/render/camera.js';
@@ -15,11 +17,13 @@ import { createScene } from './src/render/scene.js';
 import { createLights } from './src/render/lights.js';
 import { loadWorldTextures } from './src/render/textures.js';
 import { createWorld } from './src/render/worldMesh.js';
+import { createObstacleMeshes, replaceObstacleMesh, syncObstacleMesh } from './src/render/meshes.js';
 import { createScoreHud, updateScoreHud } from './src/ui/hud.js';
+
+import { createInitialObstacles } from './src/entities/obstacles.js';
 
 // state
 const state = createInitialGameState();
-const lanePositions = [-1.8, 0, 1.8];
 
 // effects
 const cameraShake = createCameraShake();
@@ -55,158 +59,8 @@ const playerMesh = createPlayerMesh();
 scene.add(playerMesh);
 
 // obstacles
-const obstacles = [];
-
-// Function to create realistic obstacle meshes
-function createObstacleMesh(type) {
-  const group = new THREE.Group();
-  
-  if (type === 'tall') {
-    // Tall obstacle - wooden gate with gap at bottom to duck under
-    const woodColor = 0x8B6F47;
-    const metalColor = 0x555555;
-    
-    // Create upper fence panels - only the top part, leaving bottom clear
-    const panelGeometry = new THREE.BoxGeometry(1.5, 1.2, 0.4);
-    const woodMaterial = new THREE.MeshLambertMaterial({ color: woodColor });
-    
-    // Top-left panel
-    const topLeftPanel = new THREE.Mesh(panelGeometry, woodMaterial);
-    topLeftPanel.position.set(-0.4, 1.3, 0);
-    topLeftPanel.castShadow = true;
-    topLeftPanel.receiveShadow = true;
-    group.add(topLeftPanel);
-    
-    // Top-right panel
-    const topRightPanel = new THREE.Mesh(panelGeometry, woodMaterial);
-    topRightPanel.position.set(0.4, 1.3, 0);
-    topRightPanel.castShadow = true;
-    topRightPanel.receiveShadow = true;
-    group.add(topRightPanel);
-    
-    // Support posts on sides
-    const postGeometry = new THREE.BoxGeometry(0.2, 2.0, 0.5);
-    const postMaterial = new THREE.MeshLambertMaterial({ color: 0x654321 });
-    
-    const leftPost = new THREE.Mesh(postGeometry, postMaterial);
-    leftPost.position.set(-0.8, 1.0, 0);
-    leftPost.castShadow = true;
-    leftPost.receiveShadow = true;
-    group.add(leftPost);
-    
-    const rightPost = new THREE.Mesh(postGeometry, postMaterial);
-    rightPost.position.set(0.8, 1.0, 0);
-    rightPost.castShadow = true;
-    rightPost.receiveShadow = true;
-    group.add(rightPost);
-    
-    // Bottom beam crossbar
-    const beamGeometry = new THREE.BoxGeometry(1.8, 0.18, 0.5);
-    const beam = new THREE.Mesh(beamGeometry, postMaterial);
-    beam.position.set(0, 0.5, 0);
-    beam.castShadow = true;
-    beam.receiveShadow = true;
-    group.add(beam);
-    
-    // Metal corner brackets for detail
-    const bracketGeometry = new THREE.BoxGeometry(0.15, 0.3, 0.3);
-    const bracketMaterial = new THREE.MeshLambertMaterial({ color: metalColor });
-    
-    const bracket1 = new THREE.Mesh(bracketGeometry, bracketMaterial);
-    bracket1.position.set(-0.75, 0.65, 0.15);
-    bracket1.castShadow = true;
-    bracket1.receiveShadow = true;
-    group.add(bracket1);
-    
-    const bracket2 = new THREE.Mesh(bracketGeometry, bracketMaterial);
-    bracket2.position.set(0.75, 0.65, 0.15);
-    bracket2.castShadow = true;
-    bracket2.receiveShadow = true;
-    group.add(bracket2);
-    
-  } else {
-    // Low obstacle - wooden barrels/boxes (low enough to jump over)
-    const barrelColor = 0xB8860B;
-    const metalColor = 0x666666;
-    
-    // Shorter barrel geometry
-    const barrelGeometry = new THREE.CylinderGeometry(0.35, 0.35, 0.5, 8);
-    const barrelMaterial = new THREE.MeshLambertMaterial({ color: barrelColor });
-    
-    // Left barrel
-    const leftBarrel = new THREE.Mesh(barrelGeometry, barrelMaterial);
-    leftBarrel.position.set(-0.5, 0.25, 0);
-    leftBarrel.castShadow = true;
-    leftBarrel.receiveShadow = true;
-    group.add(leftBarrel);
-    
-    // Right barrel
-    const rightBarrel = new THREE.Mesh(barrelGeometry, barrelMaterial);
-    rightBarrel.position.set(0.5, 0.25, 0);
-    rightBarrel.castShadow = true;
-    rightBarrel.receiveShadow = true;
-    group.add(rightBarrel);
-    
-    // Center barrel on top (lower than before)
-    const topBarrel = new THREE.Mesh(barrelGeometry, barrelMaterial);
-    topBarrel.position.set(0, 0.7, 0);
-    topBarrel.castShadow = true;
-    topBarrel.receiveShadow = true;
-    group.add(topBarrel);
-    
-    // Metal bands on barrels
-    const bandGeometry = new THREE.TorusGeometry(0.36, 0.08, 8, 16);
-    const bandMaterial = new THREE.MeshLambertMaterial({ color: metalColor });
-    
-    const band1 = new THREE.Mesh(bandGeometry, bandMaterial);
-    band1.position.set(-0.5, 0.12, 0);
-    band1.castShadow = true;
-    band1.receiveShadow = true;
-    group.add(band1);
-    
-    const band2 = new THREE.Mesh(bandGeometry, bandMaterial);
-    band2.position.set(0.5, 0.12, 0);
-    band2.castShadow = true;
-    band2.receiveShadow = true;
-    group.add(band2);
-    
-    const band3 = new THREE.Mesh(bandGeometry, bandMaterial);
-    band3.position.set(0, 0.65, 0);
-    band3.castShadow = true;
-    band3.receiveShadow = true;
-    group.add(band3);
-    
-    // Top rim on center barrel
-    const rimGeometry = new THREE.TorusGeometry(0.38, 0.05, 8, 16);
-    const rim = new THREE.Mesh(rimGeometry, bandMaterial);
-    rim.position.set(0, 0.95, 0);
-    rim.castShadow = true;
-    rim.receiveShadow = true;
-    group.add(rim);
-  }
-  
-  return group;
-}
-
-function createObstacle(z) {
-  const type = Math.random() > 0.5 ? 'tall' : 'low';
-  const obstacleGroup = createObstacleMesh(type);
-  
-  const laneIndex = Math.floor(Math.random() * lanePositions.length);
-  obstacleGroup.position.set(lanePositions[laneIndex], 0, z);
-  
-  scene.add(obstacleGroup);
-  
-  obstacles.push({
-    mesh: obstacleGroup,
-    type: type,
-    laneX: lanePositions[laneIndex]
-  });
-}
-
-for (let i = 0; i < 8; i++) {
-  createObstacle(-30 - i * 25);
-}
+const obstacles = createInitialObstacles();
+const obstacleMeshes = createObstacleMeshes(scene, obstacles);
 
 // UI
 const overlay = document.createElement('div');
@@ -261,22 +115,14 @@ function startGame() {
 
   syncPlayerMesh(playerMesh, state.player);
 
-  obstacles.forEach((obstacle, index) => {
-    const newType = Math.random() > 0.5 ? 'tall' : 'low';
-    
-    // Recreate mesh if type changes
-    if (obstacle.type !== newType) {
-      scene.remove(obstacle.mesh);
-      const newMesh = createObstacleMesh(newType);
-      scene.add(newMesh);
-      obstacle.mesh = newMesh;
-      obstacle.type = newType;
+  const resetResults = resetObstaclesForStart(obstacles);
+
+  resetResults.forEach((result, index) => {
+    if (result.typeChanged) {
+      obstacleMeshes[index] = replaceObstacleMesh(scene, obstacleMeshes[index], obstacles[index]);
+    } else {
+      syncObstacleMesh(obstacleMeshes[index], obstacles[index]);
     }
-    
-    obstacle.mesh.position.z = -30 - index * 25;
-    const laneIndex = Math.floor(Math.random() * lanePositions.length);
-    obstacle.mesh.position.x = lanePositions[laneIndex];
-    obstacle.laneX = lanePositions[laneIndex];
   });
 
   updateScoreHud(scoreHud, 0);
@@ -302,60 +148,6 @@ renderStartScreen();
 // input
 setupPlayerInput(state);
 
-function updateObstacles() {
-  const moveSpeed = state.speed * 25;
-
-  obstacles.forEach((obstacle) => {
-    obstacle.mesh.position.z += moveSpeed;
-
-    if (obstacle.mesh.position.z > 8) {
-      const newType = Math.random() > 0.5 ? 'tall' : 'low';
-      
-      // Always recreate mesh on respawn
-      scene.remove(obstacle.mesh);
-      const newMesh = createObstacleMesh(newType);
-      scene.add(newMesh);
-      obstacle.mesh = newMesh;
-      
-      obstacle.mesh.position.z = -170 - Math.random() * 90;
-      const laneIndex = Math.floor(Math.random() * lanePositions.length);
-      obstacle.mesh.position.x = lanePositions[laneIndex];
-      obstacle.laneX = lanePositions[laneIndex];
-      obstacle.type = newType;
-    }
-
-    const zClose = obstacle.mesh.position.z > 2.0 && obstacle.mesh.position.z < 4.0;
-    const sameLane = Math.abs(obstacle.mesh.position.x - state.player.x) < 0.9;
-    
-    let collision = false;
-    
-    if (zClose && sameLane) {
-      if (obstacle.type === 'tall') {
-        // Tall gate - player must duck under by lowering (y <= 0.1 to pass)
-        collision = state.player.y > 0.1;
-      } else {
-        // Barrels - player must jump over (y >= 1.0 to pass)
-        collision = state.player.y < 1.0;
-      }
-      
-      if (collision) {
-        markPlayerHit(state.player);
-        state.gameOver = true;
-        
-        // Determine knockback direction based on obstacle position
-        const knockbackDirection = obstacle.mesh.position.x > state.player.x ? 1 : -1;
-        
-        // Start knockback and camera shake effects
-        startKnockback(knockback, state.player, knockbackDirection, 1.0, 24);
-        startCameraShake(cameraShake, 0.35, 12);
-        
-        // Show game over screen immediately
-        showGameOver();
-      }
-    }
-  });
-}
-
 function updateScore() {
   state.score += 1;
   updateScoreHud(scoreHud, state.score);
@@ -378,7 +170,33 @@ function animate() {
     syncPlayerMesh(playerMesh, state.player);
 
     updateWorld(state, world, textures);
-    updateObstacles();
+
+    const respawnedIndices = updateObstacles(state, obstacles);
+
+    for (let i = 0; i < obstacles.length; i++) {
+      if (respawnedIndices.includes(i)) {
+        obstacleMeshes[i] = replaceObstacleMesh(scene, obstacleMeshes[i], obstacles[i]);
+      } else {
+        syncObstacleMesh(obstacleMeshes[i], obstacles[i]);
+      }
+    }
+
+    const hitObstacle = findFirstCollidingObstacle(state.player, obstacles);
+
+    if (hitObstacle) {
+      markPlayerHit(state.player);
+      state.gameOver = true;
+
+      const knockbackDirection = hitObstacle.x > state.player.x ? 1 : -1;
+
+      // Start knockback and camera shake effects
+      startKnockback(knockback, state.player, knockbackDirection, 1.0, 24);
+      startCameraShake(cameraShake, 0.35, 12);
+
+      // Show game over screen immediately
+      showGameOver();
+    }
+
     updateScore();
   }
 
