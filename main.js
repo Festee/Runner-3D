@@ -10,6 +10,7 @@ import { setupPlayerInput } from './src/core/inputState.js';
 import { updateGameplay } from './src/core/updateGame.js';
 
 import { createKnockbackState } from './src/logic/knockback.js';
+import { ensureAudioReady } from './src/audio/coinSound.js';
 
 import { createPlayerMesh } from './src/render/playerMesh.js';
 import { createCamera, resizeCamera } from './src/render/camera.js';
@@ -30,6 +31,8 @@ import {
 } from './src/ui/gameOver.js';
 
 import { createInitialObstacles } from './src/entities/obstacles.js';
+import { createInitialCollectibles } from './src/entities/collectibles.js';
+import { createCollectibleMeshes } from './src/render/collectibleMeshes.js';
 
 // state
 const state = createInitialGameState();
@@ -69,12 +72,15 @@ scene.add(playerMesh);
 
 // obstacles
 const obstacles = createInitialObstacles();
+const collectibles = createInitialCollectibles();
 const obstacleMeshes = createObstacleMeshes(scene, obstacles);
+const collectibleMeshes = createCollectibleMeshes(scene, collectibles);
 
 // attach gameplay runtime refs into state
 attachRuntimeState(state, {
   world,
   obstacles,
+  collectibles,
   cameraShake,
   knockback,
 });
@@ -89,9 +95,11 @@ function renderStartScreen() {
 }
 
 function startGame() {
+  ensureAudioReady();
   initializeRun(state, {
     scene,
     obstacleMeshes,
+    collectibleMeshes,
     scoreHud,
   });
   hideOverlay(overlay);
@@ -115,6 +123,7 @@ function animate() {
       world: state.entities.world,
       textures,
       obstacles: state.entities.obstacles,
+      collectibles: state.entities.collectibles,
       knockback: state.effects.knockback,
       cameraShake: state.effects.cameraShake,
     });
@@ -125,7 +134,10 @@ function animate() {
       playerMesh,
       obstacleMeshes,
       obstacles: state.entities.obstacles,
+      collectibleMeshes,
+      collectibles: state.entities.collectibles,
       respawnedIndices: gameplayResult.respawnedIndices,
+      respawnedCollectibleIndices: gameplayResult.respawnedCollectibleIndices,
       camera,
       cameraShake: state.effects.cameraShake,
       cameraBasePosition,
@@ -139,6 +151,7 @@ function animate() {
       updateScoreHud(
         scoreHud,
         gameplayResult.scoreResult.score,
+        gameplayResult.scoreResult.coinsCollected,
         gameplayResult.scoreResult.highScore
       );
     }
@@ -149,7 +162,10 @@ function animate() {
       playerMesh,
       obstacleMeshes,
       obstacles: state.entities.obstacles,
+      collectibleMeshes,
+      collectibles: state.entities.collectibles,
       respawnedIndices: [],
+      respawnedCollectibleIndices: [],
       camera,
       cameraShake: state.effects.cameraShake,
       cameraBasePosition,

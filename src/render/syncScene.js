@@ -1,5 +1,9 @@
 import { syncPlayerMesh } from './playerMesh.js';
 import { replaceObstacleMesh, syncObstacleMesh } from './meshes.js';
+import {
+  replaceCollectibleMesh,
+  syncCollectibleMesh,
+} from './collectibleMeshes.js';
 import { updateCamera } from './camera.js';
 import { updateCameraShake } from './cameraEffects.js';
 
@@ -23,7 +27,10 @@ export function syncGameplayScene(state, sceneState) {
     playerMesh,
     obstacleMeshes,
     obstacles,
+    collectibleMeshes,
+    collectibles,
     respawnedIndices,
+    respawnedCollectibleIndices,
     camera,
     cameraShake,
     cameraBasePosition,
@@ -40,6 +47,18 @@ export function syncGameplayScene(state, sceneState) {
     }
   }
 
+  for (let i = 0; i < collectibles.length; i++) {
+    if (respawnedCollectibleIndices.includes(i)) {
+      collectibleMeshes[i] = replaceCollectibleMesh(
+        scene,
+        collectibleMeshes[i],
+        collectibles[i]
+      );
+    } else {
+      syncCollectibleMesh(collectibleMeshes[i], collectibles[i]);
+    }
+  }
+
   updateCamera(camera, state.player);
 
   cameraBasePosition.x = camera.position.x;
@@ -50,5 +69,6 @@ export function syncGameplayScene(state, sceneState) {
 
   return {
     obstacleMeshes,
+    collectibleMeshes,
   };
 }

@@ -23,6 +23,7 @@ export function createInitialGameState() {
     phase: 'start',
     started: false,
     score: 0,
+    coinsCollected: 0,
     highScore: loadHighScore(),
     gameOver: false,
     speed: INITIAL_SPEED,
@@ -31,6 +32,7 @@ export function createInitialGameState() {
     entities: {
       world: null,
       obstacles: [],
+      collectibles: [],
     },
 
     effects: {
@@ -49,12 +51,14 @@ export function attachRuntimeState(
   {
     world = null,
     obstacles = [],
+    collectibles = [],
     cameraShake = null,
     knockback = null,
   } = {}
 ) {
   state.entities.world = world;
   state.entities.obstacles = obstacles;
+  state.entities.collectibles = collectibles;
   state.effects.cameraShake = cameraShake;
   state.effects.knockback = knockback;
 
@@ -73,6 +77,7 @@ export function setGamePhase(state, phase) {
 export function resetRunState(state) {
   setGamePhase(state, 'running');
   state.score = 0;
+  state.coinsCollected = 0;
   state.speed = INITIAL_SPEED;
   state.player = createInitialPlayerState();
 

@@ -1,6 +1,7 @@
 import { saveHighScore } from '../core/gameState.js';
 
 const SCORE_STEP = 1;
+const COLLECTIBLE_SCORE_VALUE = 50;
 
 const BASE_SPEED = 0.007;
 const SPEED_INCREASE_INTERVAL = 600;
@@ -14,8 +15,8 @@ function calculateSpeedFromScore(score) {
   return Math.min(nextSpeed, MAX_SPEED);
 }
 
-export function updateScore(state) {
-  state.score += SCORE_STEP;
+function applyScoreDelta(state, delta) {
+  state.score += delta;
 
   if (state.score > state.highScore) {
     state.highScore = state.score;
@@ -26,7 +27,17 @@ export function updateScore(state) {
 
   return {
     score: state.score,
+    coinsCollected: state.coinsCollected,
     highScore: state.highScore,
     speed: state.speed,
   };
+}
+
+export function updateScore(state) {
+  return applyScoreDelta(state, SCORE_STEP);
+}
+
+export function addCollectibleScore(state) {
+  state.coinsCollected += 1;
+  return applyScoreDelta(state, COLLECTIBLE_SCORE_VALUE);
 }
