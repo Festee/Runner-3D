@@ -42,6 +42,7 @@ export function createInitialGameState() {
 
     ui: {
       overlayVisible: true,
+      visualMode: 'day',
     },
   };
 }

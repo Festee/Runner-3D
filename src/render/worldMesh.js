@@ -41,6 +41,37 @@ function createSideMesh(scene, sideGeometry, sideMaterial, x, z) {
   return sideMesh;
 }
 
+function createStreetLamp(scene, x, z) {
+  const postGeometry = new THREE.CylinderGeometry(0.06, 0.08, 2.9, 8);
+  const postMaterial = new THREE.MeshLambertMaterial({ color: 0x2f3442 });
+  const post = new THREE.Mesh(postGeometry, postMaterial);
+  post.position.set(x, 1.2, z);
+  post.castShadow = true;
+  post.receiveShadow = true;
+  scene.add(post);
+
+  const bulbGeometry = new THREE.SphereGeometry(0.14, 12, 12);
+  const bulbMaterial = new THREE.MeshLambertMaterial({
+    color: 0xfff0c4,
+    emissive: 0xffd37a,
+    emissiveIntensity: 0.0,
+  });
+  const bulb = new THREE.Mesh(bulbGeometry, bulbMaterial);
+  bulb.position.set(x, 2.65, z);
+  scene.add(bulb);
+
+  const light = new THREE.PointLight(0xffd37a, 0.0, 14, 2);
+  light.position.set(x, 2.65, z);
+  light.castShadow = false;
+  scene.add(light);
+
+  return {
+    post,
+    bulb,
+    light,
+  };
+}
+
 function createBuildingMaterial(textures, segmentIndex, sideSign) {
   const textureIndex =
     (segmentIndex + (sideSign > 0 ? 1 : 0)) % textures.buildingTextures.length;
@@ -108,12 +139,17 @@ function createWorldSegmentMeshes(
     z
   );
 
+  const leftLamp = createStreetLamp(scene, -WORLD_DEFAULTS.sidewalkOffset + 0.7, z);
+  const rightLamp = createStreetLamp(scene, WORLD_DEFAULTS.sidewalkOffset - 0.7, z);
+
   return {
     road,
     leftSidewalk,
     rightSidewalk,
     leftSide,
     rightSide,
+    leftLamp,
+    rightLamp,
   };
 }
 

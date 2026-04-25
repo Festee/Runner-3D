@@ -17,6 +17,12 @@ function syncWorldScene(world) {
     meshes.rightSidewalk.position.z = segment.z;
     meshes.leftSide.position.z = segment.z;
     meshes.rightSide.position.z = segment.z;
+    meshes.leftLamp.post.position.z = segment.z;
+    meshes.leftLamp.bulb.position.z = segment.z;
+    meshes.leftLamp.light.position.z = segment.z;
+    meshes.rightLamp.post.position.z = segment.z;
+    meshes.rightLamp.bulb.position.z = segment.z;
+    meshes.rightLamp.light.position.z = segment.z;
   }
 }
 
