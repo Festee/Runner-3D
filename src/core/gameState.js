@@ -1,6 +1,6 @@
 import { createInitialPlayerState } from '../entities/player.js';
 
-const INITIAL_SPEED = 0.010;
+const INITIAL_SPEED = 0.005;
 const HIGH_SCORE_STORAGE_KEY = 'runner3d_high_score';
 
 function loadHighScore() {

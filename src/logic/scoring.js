@@ -3,7 +3,7 @@ import { saveHighScore } from '../core/gameState.js';
 const SCORE_STEP = 1;
 const COLLECTIBLE_SCORE_VALUE = 50;
 
-const BASE_SPEED = 0.007;
+const BASE_SPEED = 0.005;
 const SPEED_INCREASE_INTERVAL = 600;
 const SPEED_INCREASE_AMOUNT = 0.001;
 const MAX_SPEED = 0.020;
