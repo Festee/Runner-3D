@@ -23,6 +23,14 @@ function syncWorldScene(world) {
     meshes.rightLamp.post.position.z = segment.z;
     meshes.rightLamp.bulb.position.z = segment.z;
     meshes.rightLamp.light.position.z = segment.z;
+    meshes.leftEdgeStrip.position.z = segment.z;
+    meshes.rightEdgeStrip.position.z = segment.z;
+    meshes.leftCurb.position.z = segment.z;
+    meshes.rightCurb.position.z = segment.z;
+
+    meshes.laneMarkers.forEach((marker) => {
+      marker.position.z = segment.z + marker.userData.localZOffset;
+    });
   }
 }
 
