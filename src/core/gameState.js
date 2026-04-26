@@ -1,6 +1,6 @@
 import { createInitialPlayerState } from '../entities/player.js';
 
-const INITIAL_SPEED = 0.010;
+const INITIAL_SPEED = 0.005;
 const HIGH_SCORE_STORAGE_KEY = 'runner3d_high_score';
 
 function loadHighScore() {
@@ -23,6 +23,7 @@ export function createInitialGameState() {
     phase: 'start',
     started: false,
     score: 0,
+    coinsCollected: 0,
     highScore: loadHighScore(),
     gameOver: false,
     speed: INITIAL_SPEED,
@@ -31,6 +32,7 @@ export function createInitialGameState() {
     entities: {
       world: null,
       obstacles: [],
+      collectibles: [],
     },
 
     effects: {
@@ -40,6 +42,7 @@ export function createInitialGameState() {
 
     ui: {
       overlayVisible: true,
+      visualMode: 'day',
     },
   };
 }
@@ -49,12 +52,14 @@ export function attachRuntimeState(
   {
     world = null,
     obstacles = [],
+    collectibles = [],
     cameraShake = null,
     knockback = null,
   } = {}
 ) {
   state.entities.world = world;
   state.entities.obstacles = obstacles;
+  state.entities.collectibles = collectibles;
   state.effects.cameraShake = cameraShake;
   state.effects.knockback = knockback;
 
@@ -73,6 +78,7 @@ export function setGamePhase(state, phase) {
 export function resetRunState(state) {
   setGamePhase(state, 'running');
   state.score = 0;
+  state.coinsCollected = 0;
   state.speed = INITIAL_SPEED;
   state.player = createInitialPlayerState();
 

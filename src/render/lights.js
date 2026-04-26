@@ -14,8 +14,11 @@ export function createLights() {
   directionalLight.shadow.camera.top = 20;
   directionalLight.shadow.camera.bottom = -20;
 
+  const nightFillLight = new THREE.HemisphereLight(0x6b8ad6, 0x1a2238, 0.0);
+
   return {
     ambientLight,
     directionalLight,
+    nightFillLight,
   };
 }

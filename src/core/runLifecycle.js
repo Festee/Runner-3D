@@ -1,6 +1,10 @@
 import { resetRunState } from './gameState.js';
 import { resetObstaclesForStart } from '../logic/spawning.js';
 import { replaceObstacleMesh, syncObstacleMesh } from '../render/meshes.js';
+import { resetCollectiblesForStart } from '../entities/collectibles.js';
+import {
+  replaceCollectibleMesh,
+} from '../render/collectibleMeshes.js';
 import { updateScoreHud } from '../ui/hud.js';
 
 export function resetEffects(state) {
@@ -26,17 +30,38 @@ export function resetObstacleVisuals(state, scene, obstacleMeshes) {
   return obstacleMeshes;
 }
 
+export function resetCollectibleVisuals(state, scene, collectibleMeshes) {
+  resetCollectiblesForStart(state.entities.collectibles);
+
+  state.entities.collectibles.forEach((collectible, index) => {
+    collectibleMeshes[index] = replaceCollectibleMesh(
+      scene,
+      collectibleMeshes[index],
+      collectible
+    );
+  });
+
+  return collectibleMeshes;
+}
+
 export function initializeRun(state, runtime) {
   const {
     scene,
     obstacleMeshes,
+    collectibleMeshes,
     scoreHud,
   } = runtime;
 
   resetRunState(state);
   resetEffects(state);
   resetObstacleVisuals(state, scene, obstacleMeshes);
-  updateScoreHud(scoreHud, state.score, state.highScore);
+  resetCollectibleVisuals(state, scene, collectibleMeshes);
+  updateScoreHud(
+    scoreHud,
+    state.score,
+    state.coinsCollected,
+    state.highScore
+  );
 
   return state;
 }
