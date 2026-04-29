@@ -19,7 +19,7 @@ export function updateCollectibles(state, collectibles) {
     collectible.z += moveSpeed;
 
     if (collectible.z > COLLECTIBLE_RESPAWN_THRESHOLD_Z) {
-      respawnCollectible(collectible);
+      collectibles[index] = respawnCollectible(collectible);
       respawnedCollectibleIndices.push(index);
     }
   });
@@ -43,13 +43,13 @@ function isCollectibleCollected(player, collectible) {
 export function collectCollectibles(player, collectibles) {
   let collectedCount = 0;
 
-  collectibles.forEach((collectible) => {
+  collectibles.forEach((collectible, index) => {
     if (!isCollectibleCollected(player, collectible)) {
       return;
     }
 
     collectedCount += 1;
-    respawnCollectible(collectible);
+    collectibles[index] = respawnCollectible(collectible);
   });
 
   return collectedCount;

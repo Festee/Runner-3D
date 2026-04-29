@@ -6,8 +6,7 @@ import {
   updateCollectibles,
   collectCollectibles,
 } from '../logic/collectibles.js';
-import { playCoinPickupSound } from '../audio/coinSound.js';
-import { addCollectibleScore, updateScore } from '../logic/scoring.js';
+import { addCollectedCoinsScore, updateScore } from '../logic/scoring.js';
 import { updateKnockback, isKnockbackActive } from '../logic/knockback.js';
 
 export function updateGameplay(state, systems) {
@@ -17,8 +16,9 @@ export function updateGameplay(state, systems) {
     obstacles,
     collectibles,
     knockback,
-    cameraShake,
   } = systems;
+
+  const events = [];
 
   if (isKnockbackActive(knockback)) {
     updateKnockback(knockback, state.player);
@@ -33,9 +33,12 @@ export function updateGameplay(state, systems) {
   const hitObstacle = checkAndResolveObstacleCollision(
     state,
     obstacles,
-    knockback,
-    cameraShake
+    knockback
   );
+  
+  if (hitObstacle) {
+    events.push('playerHit');
+  }
 
   let scoreResult = null;
   const collectedCount = hitObstacle
@@ -45,19 +48,17 @@ export function updateGameplay(state, systems) {
   if (!hitObstacle) {
     scoreResult = updateScore(state);
 
-    for (let i = 0; i < collectedCount; i++) {
-      scoreResult = addCollectibleScore(state);
-    }
-
     if (collectedCount > 0) {
-      playCoinPickupSound();
+      scoreResult = addCollectedCoinsScore(state, collectedCount);
+      events.push('coinPickup');
     }
-  }
+}
 
   return {
     respawnedIndices,
     respawnedCollectibleIndices,
     hitObstacle,
     scoreResult,
+    events,
   };
 }

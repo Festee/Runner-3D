@@ -1,7 +1,7 @@
-const LANE_POSITIONS = [-1.8, 0, 1.8];
+import { LANE_POSITIONS } from '../core/constants.js';
 
 export function getLanePositions() {
-  return LANE_POSITIONS;
+  return [...LANE_POSITIONS];
 }
 
 export function getRandomObstacleType() {
@@ -23,31 +23,32 @@ export function createObstacleState(z, type = getRandomObstacleType(), x = getRa
 }
 
 export function createInitialObstacles(count = 8, startZ = -30, gap = 25) {
-  const obstacles = [];
-
-  for (let i = 0; i < count; i++) {
-    obstacles.push(createObstacleState(startZ - i * gap));
-  }
-
-  return obstacles;
+  return Array.from({ length: count }, (_, index) =>
+    createObstacleState(startZ - index * gap)
+  );
 }
 
 export function resetObstacleForStart(obstacle, index) {
-  const previousType = obstacle.type;
-
-  obstacle.type = getRandomObstacleType();
-  obstacle.x = getRandomLaneX();
-  obstacle.y = 0;
-  obstacle.z = -30 - index * 25;
+  const nextObstacle = {
+    ...obstacle,
+    type: getRandomObstacleType(),
+    x: getRandomLaneX(),
+    y: 0,
+    z: -30 - index * 25,
+  };
 
   return {
-    typeChanged: previousType !== obstacle.type,
+    obstacle: nextObstacle,
+    typeChanged: obstacle.type !== nextObstacle.type,
   };
 }
 
 export function respawnObstacle(obstacle) {
-  obstacle.type = getRandomObstacleType();
-  obstacle.x = getRandomLaneX();
-  obstacle.y = 0;
-  obstacle.z = -170 - Math.random() * 90;
+  return {
+    ...obstacle,
+    type: getRandomObstacleType(),
+    x: getRandomLaneX(),
+    y: 0,
+    z: -170 - Math.random() * 90,
+  };
 }

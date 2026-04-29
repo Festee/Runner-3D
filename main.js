@@ -10,11 +10,17 @@ import { setupPlayerInput } from './src/core/inputState.js';
 import { updateGameplay } from './src/core/updateGame.js';
 
 import { createKnockbackState } from './src/logic/knockback.js';
-import { ensureAudioReady } from './src/audio/coinSound.js';
+import {
+  ensureAudioReady,
+  playCoinPickupSound,
+} from './src/audio/coinSound.js';
 
 import { createPlayerMesh } from './src/render/playerMesh.js';
 import { createCamera, resizeCamera } from './src/render/camera.js';
-import { createCameraShake } from './src/render/cameraEffects.js';
+import {
+  createCameraShake,
+  startCameraShake,
+} from './src/render/cameraEffects.js';
 import { createScene } from './src/render/scene.js';
 import { createLights } from './src/render/lights.js';
 import { applyVisualMode } from './src/render/theme.js';
@@ -22,6 +28,10 @@ import { loadWorldTextures } from './src/render/textures.js';
 import { createWorld } from './src/render/worldMesh.js';
 import { createObstacleMeshes } from './src/render/meshes.js';
 import { syncGameplayScene } from './src/render/syncScene.js';
+import {
+  resetObstacleVisuals,
+  resetCollectibleVisuals,
+} from './src/render/resetVisuals.js';
 
 import { createScoreHud, updateScoreHud } from './src/ui/hud.js';
 import {
@@ -41,7 +51,7 @@ const state = createInitialGameState();
 // effects
 const cameraShake = createCameraShake();
 const knockback = createKnockbackState();
-let cameraBasePosition = { x: 0, y: 3, z: 8 };
+const cameraBasePosition = { x: 0, y: 3, z: 8 };
 
 // scene
 const scene = createScene();
@@ -93,7 +103,7 @@ const scoreHud = createScoreHud();
 
 function renderStartScreen() {
   setGamePhase(state, 'start');
-  showStartScreen(overlay, state.highScore, startGame, state.ui.visualMode);
+  showStartScreen(overlay, state.highScore, state.totalCoins, startGame, state.ui.visualMode);
 }
 
 function startGame(visualMode = 'day') {
@@ -105,18 +115,36 @@ function startGame(visualMode = 'day') {
     state.ui.visualMode
   );
   ensureAudioReady();
-  initializeRun(state, {
+
+  const runResetResult = initializeRun(state);
+
+  resetObstacleVisuals(
     scene,
+    state.entities.obstacles,
     obstacleMeshes,
-    collectibleMeshes,
+    runResetResult.resetObstacleResults
+  );
+
+  resetCollectibleVisuals(
+    scene,
+    state.entities.collectibles,
+    collectibleMeshes
+  );
+
+  updateScoreHud(
     scoreHud,
-  });
+    state.score,
+    state.coinsCollected,
+    state.totalCoins,
+    state.highScore
+  );
+
   hideOverlay(overlay);
 }
 
 function showGameOver() {
   setGamePhase(state, 'gameOver');
-  showGameOverScreen(overlay, state.score, state.highScore, renderStartScreen);
+  showGameOverScreen(overlay, state.score, state.highScore, state.totalCoins, renderStartScreen);
 }
 
 renderStartScreen();
@@ -140,8 +168,13 @@ function animate() {
       obstacles: state.entities.obstacles,
       collectibles: state.entities.collectibles,
       knockback: state.effects.knockback,
-      cameraShake: state.effects.cameraShake,
     });
+    if (gameplayResult.events.includes('coinPickup')) {
+      playCoinPickupSound();
+    }
+    if (gameplayResult.events.includes('playerHit')) {
+      startCameraShake(state.effects.cameraShake, 0.35, 12);
+    }
 
     syncGameplayScene(state, {
       scene,
@@ -167,6 +200,7 @@ function animate() {
         scoreHud,
         gameplayResult.scoreResult.score,
         gameplayResult.scoreResult.coinsCollected,
+        gameplayResult.scoreResult.totalCoins,
         gameplayResult.scoreResult.highScore
       );
     }

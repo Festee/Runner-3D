@@ -1,5 +1,6 @@
 import * as THREE from 'https://unpkg.com/three@0.183.2/build/three.module.js';
 import { WORLD_DEFAULTS } from '../core/worldConstants.js';
+import { createWorldSegments } from '../entities/environment.js';
 
 function createRoadMesh(scene, roadGeometry, roadMaterial, z) {
   const road = new THREE.Mesh(roadGeometry, roadMaterial);
@@ -49,22 +50,23 @@ function createLaneMarkers(scene, z) {
   });
 
   const laneMarkerGeometry = new THREE.BoxGeometry(0.14, 0.025, 8.5);
-  const laneMarkers = [];
   const markerCount = 8;
   const markerStep = WORLD_DEFAULTS.segmentLength / markerCount;
 
-  for (let i = 0; i < markerCount; i++) {
+  return Array.from({ length: markerCount }, (_, index) => {
     const localZOffset =
-      -WORLD_DEFAULTS.segmentLength / 2 + markerStep * i + markerStep * 0.5;
+      -WORLD_DEFAULTS.segmentLength / 2 +
+      markerStep * index +
+      markerStep * 0.5;
+
     const marker = new THREE.Mesh(laneMarkerGeometry, laneMarkerMaterial);
     marker.position.set(0, WORLD_DEFAULTS.roadY + 0.01, z + localZOffset);
     marker.userData.localZOffset = localZOffset;
     marker.receiveShadow = true;
     scene.add(marker);
-    laneMarkers.push(marker);
-  }
 
-  return laneMarkers;
+    return marker;
+  });
 }
 
 function createRoadEdgeStrip(scene, x, z) {
@@ -131,13 +133,6 @@ function createBuildingMaterial(textures, segmentIndex, sideSign) {
     color: 0xffffff,
     side: THREE.DoubleSide,
   });
-}
-
-function createWorldSegmentState(index) {
-  return {
-    index,
-    z: -index * WORLD_DEFAULTS.segmentLength,
-  };
 }
 
 function createWorldSegmentMeshes(
@@ -241,26 +236,19 @@ export function createWorld(scene, textures) {
     WORLD_DEFAULTS.segmentLength
   );
 
-  const segments = [];
-  const segmentMeshes = [];
-
-  for (let i = 0; i < WORLD_DEFAULTS.totalSegments; i++) {
-    const segment = createWorldSegmentState(i);
-    segments.push(segment);
-
-    segmentMeshes.push(
-      createWorldSegmentMeshes(
-        scene,
-        textures,
-        roadGeometry,
-        roadMaterial,
-        sidewalkGeometry,
-        sidewalkMaterial,
-        sideGeometry,
-        segment
-      )
-    );
-  }
+  const segments = createWorldSegments();
+  const segmentMeshes = segments.map((segment) =>
+    createWorldSegmentMeshes(
+      scene,
+      textures,
+      roadGeometry,
+      roadMaterial,
+      sidewalkGeometry,
+      sidewalkMaterial,
+      sideGeometry,
+      segment
+    )
+  );
 
   return {
     segments,

@@ -14,6 +14,7 @@ export function createScoreHud() {
   scoreHud.innerHTML = `
     <div>Score: 0</div>
     <div>Coins: 0</div>
+    <div>Total Coins: 0</div>
     <div>High Score: 0</div>
   `;
 
@@ -21,10 +22,11 @@ export function createScoreHud() {
   return scoreHud;
 }
 
-export function updateScoreHud(scoreHud, score, coinsCollected, highScore) {
+export function updateScoreHud(scoreHud, score, coinsCollected, totalCoins, highScore) {
   scoreHud.innerHTML = `
     <div>Score: ${score}</div>
     <div>Coins: ${coinsCollected}</div>
+    <div>Total Coins: ${totalCoins}</div>
     <div>High Score: ${highScore}</div>
   `;
 }

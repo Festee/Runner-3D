@@ -27,31 +27,27 @@ export function createCollectibleState(z, x = getRandomLaneX(), y = getRandomHei
 }
 
 export function createInitialCollectibles(count = 6) {
-  const collectibles = [];
-
-  for (let i = 0; i < count; i++) {
-    collectibles.push(createCollectibleState(COLLECTIBLE_START_Z - i * COLLECTIBLE_GAP));
-  }
-
-  return collectibles;
+  return Array.from({ length: count }, (_, index) =>
+    createCollectibleState(COLLECTIBLE_START_Z - index * COLLECTIBLE_GAP)
+  );
 }
 
 export function resetCollectiblesForStart(collectibles) {
-  collectibles.forEach((collectible, index) => {
-    collectible.x = getRandomLaneX();
-    collectible.y = getRandomHeight();
-    collectible.z = COLLECTIBLE_START_Z - index * COLLECTIBLE_GAP;
-    collectible.isActive = true;
-  });
-
-  return collectibles;
+  return collectibles.map((collectible, index) => ({
+    ...collectible,
+    x: getRandomLaneX(),
+    y: getRandomHeight(),
+    z: COLLECTIBLE_START_Z - index * COLLECTIBLE_GAP,
+    isActive: true,
+  }));
 }
 
 export function respawnCollectible(collectible) {
-  collectible.x = getRandomLaneX();
-  collectible.y = getRandomHeight();
-  collectible.z = -150 - Math.random() * 100;
-  collectible.isActive = true;
-
-  return collectible;
+  return {
+    ...collectible,
+    x: getRandomLaneX(),
+    y: getRandomHeight(),
+    z: -150 - Math.random() * 100,
+    isActive: true,
+  };
 }
