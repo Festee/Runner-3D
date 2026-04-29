@@ -4,12 +4,12 @@ export const WORLD_DEFAULTS = {
   totalSegments: 10,
 
   // road
-  roadWidth: 8,           // playable width
-  roadVisualWidth: 7.6,   // visual width used for rendering
+  roadWidth: 8,          
+  roadVisualWidth: 7.6,  
   roadThickness: 0.12,
   roadY: -0.25,
 
-  // side zones (for next tasks)
+  // side zones 
   sidewalkWidth: 4.0,
   sidewalkHeight: 3.0,
   sidewalkOffset: 5.9,
@@ -20,7 +20,7 @@ export const WORLD_DEFAULTS = {
   wallOffset: 6.2,
   wallY: -0.33,
 
-  // buildings (for next tasks)
+  // optional future building variation settings
   buildingOffset: 8.5,
   buildingDepth: 3.5,
   buildingMinHeight: 6,

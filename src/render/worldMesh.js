@@ -1,5 +1,6 @@
 import * as THREE from 'https://unpkg.com/three@0.183.2/build/three.module.js';
 import { WORLD_DEFAULTS } from '../core/worldConstants.js';
+import { createWorldSegments } from '../entities/environment.js';
 
 function createRoadMesh(scene, roadGeometry, roadMaterial, z) {
   const road = new THREE.Mesh(roadGeometry, roadMaterial);
@@ -133,13 +134,6 @@ function createBuildingMaterial(textures, segmentIndex, sideSign) {
   });
 }
 
-function createWorldSegmentState(index) {
-  return {
-    index,
-    z: -index * WORLD_DEFAULTS.segmentLength,
-  };
-}
-
 function createWorldSegmentMeshes(
   scene,
   textures,
@@ -241,26 +235,19 @@ export function createWorld(scene, textures) {
     WORLD_DEFAULTS.segmentLength
   );
 
-  const segments = [];
-  const segmentMeshes = [];
-
-  for (let i = 0; i < WORLD_DEFAULTS.totalSegments; i++) {
-    const segment = createWorldSegmentState(i);
-    segments.push(segment);
-
-    segmentMeshes.push(
-      createWorldSegmentMeshes(
-        scene,
-        textures,
-        roadGeometry,
-        roadMaterial,
-        sidewalkGeometry,
-        sidewalkMaterial,
-        sideGeometry,
-        segment
-      )
-    );
-  }
+  const segments = createWorldSegments();
+  const segmentMeshes = segments.map((segment) =>
+    createWorldSegmentMeshes(
+      scene,
+      textures,
+      roadGeometry,
+      roadMaterial,
+      sidewalkGeometry,
+      sidewalkMaterial,
+      sideGeometry,
+      segment
+    )
+  );
 
   return {
     segments,

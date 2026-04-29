@@ -28,7 +28,7 @@ export function loadWorldTextures() {
       configureGroundTexture(tex);
     },
     undefined,
-    () => console.warn('road.jpg not found')
+    () => console.warn('Driving Basics.jpg not found')
   );
 
   const buildingTextures = [

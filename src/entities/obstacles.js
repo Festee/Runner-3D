@@ -1,4 +1,4 @@
-const LANE_POSITIONS = [-1.8, 0, 1.8];
+import { LANE_POSITIONS } from '../core/constants.js';
 
 export function getLanePositions() {
   return LANE_POSITIONS;
