@@ -6,7 +6,7 @@ import {
   updateCollectibles,
   collectCollectibles,
 } from '../logic/collectibles.js';
-import { addCollectibleScore, updateScore } from '../logic/scoring.js';
+import { addCollectedCoinsScore, updateScore } from '../logic/scoring.js';
 import { updateKnockback, isKnockbackActive } from '../logic/knockback.js';
 
 export function updateGameplay(state, systems) {
@@ -48,14 +48,11 @@ export function updateGameplay(state, systems) {
   if (!hitObstacle) {
     scoreResult = updateScore(state);
 
-    for (let i = 0; i < collectedCount; i++) {
-      scoreResult = addCollectibleScore(state);
-    }
-
     if (collectedCount > 0) {
+      scoreResult = addCollectedCoinsScore(state, collectedCount);
       events.push('coinPickup');
     }
-  }
+}
 
   return {
     respawnedIndices,

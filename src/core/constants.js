@@ -1,6 +1,6 @@
-export const LANE_POSITIONS = [-1.8, 0, 1.8];
+export const LANE_POSITIONS = Object.freeze([-1.8, 0, 1.8]);
 
-export const PLAYER_DEFAULTS = {
+export const PLAYER_DEFAULTS =  Object.freeze({
   lane: 0,
   x: 0,
   y: 0.2,
@@ -23,4 +23,4 @@ export const PLAYER_DEFAULTS = {
   lowerRecoverSpeed: 0.12,
   groundY: 0.2,
   lowerY: -0.05,
-};
+});

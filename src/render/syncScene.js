@@ -8,30 +8,35 @@ import { updateCamera } from './camera.js';
 import { updateCameraShake } from './cameraEffects.js';
 
 function syncWorldScene(world) {
-  for (let i = 0; i < world.segments.length; i++) {
-    const segment = world.segments[i];
-    const meshes = world.segmentMeshes[i];
+  world.segments.forEach((segment, index) => {
+    const meshes = world.segmentMeshes[index];
 
-    meshes.road.position.z = segment.z;
-    meshes.leftSidewalk.position.z = segment.z;
-    meshes.rightSidewalk.position.z = segment.z;
-    meshes.leftSide.position.z = segment.z;
-    meshes.rightSide.position.z = segment.z;
-    meshes.leftLamp.post.position.z = segment.z;
-    meshes.leftLamp.bulb.position.z = segment.z;
-    meshes.leftLamp.light.position.z = segment.z;
-    meshes.rightLamp.post.position.z = segment.z;
-    meshes.rightLamp.bulb.position.z = segment.z;
-    meshes.rightLamp.light.position.z = segment.z;
-    meshes.leftEdgeStrip.position.z = segment.z;
-    meshes.rightEdgeStrip.position.z = segment.z;
-    meshes.leftCurb.position.z = segment.z;
-    meshes.rightCurb.position.z = segment.z;
+    const segmentMeshes = [
+      meshes.road,
+      meshes.leftSidewalk,
+      meshes.rightSidewalk,
+      meshes.leftSide,
+      meshes.rightSide,
+      meshes.leftLamp.post,
+      meshes.leftLamp.bulb,
+      meshes.leftLamp.light,
+      meshes.rightLamp.post,
+      meshes.rightLamp.bulb,
+      meshes.rightLamp.light,
+      meshes.leftEdgeStrip,
+      meshes.rightEdgeStrip,
+      meshes.leftCurb,
+      meshes.rightCurb,
+    ];
+
+    segmentMeshes.forEach((mesh) => {
+      mesh.position.z = segment.z;
+    });
 
     meshes.laneMarkers.forEach((marker) => {
       marker.position.z = segment.z + marker.userData.localZOffset;
     });
-  }
+  });
 }
 
 export function syncGameplayScene(state, sceneState) {

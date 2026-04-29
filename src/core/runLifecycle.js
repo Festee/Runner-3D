@@ -10,14 +10,21 @@ export function resetEffects(state) {
 }
 
 export function resetRunEntities(state) {
-  const resetObstacleResults = resetObstaclesForStart(state.entities.obstacles);
-  resetCollectiblesForStart(state.entities.collectibles);
+  const {
+    obstacles,
+    resetObstacleResults,
+  } = resetObstaclesForStart(state.entities.obstacles);
+
+  state.entities.obstacles = obstacles;
+
+  state.entities.collectibles = resetCollectiblesForStart(
+    state.entities.collectibles
+  );
 
   return {
     resetObstacleResults,
   };
 }
-
 export function initializeRun(state) {
   resetRunState(state);
   resetEffects(state);

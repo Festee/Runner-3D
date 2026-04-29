@@ -23,7 +23,7 @@ export function findFirstCollidingObstacle(player, obstacles) {
 }
 
 export function resolveObstacleCollision(state, obstacle, knockback) {
-  markPlayerHit(state.player);
+  state.player = markPlayerHit(state.player);
   state.gameOver = true;
 
   const knockbackDirection = obstacle.x > state.player.x ? 1 : -1;

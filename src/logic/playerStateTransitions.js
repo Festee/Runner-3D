@@ -1,20 +1,14 @@
-
 export function markPlayerHit(player) {
-  player.status = 'hit';
-  
-  // Stop any ongoing jumps or lowers
-  if (player.isJumping) {
-    player.isJumping = false;
-    player.jumpVelocity = 0;
-  }
-  
-  if (player.isLowering) {
-    player.isLowering = false;
-    player.lowerVelocity = 0;
-  }
-
-  player.isRecoveringFromLower = false;
-  player.lowerTimer = 0;
+  return {
+    ...player,
+    status: 'hit',
+    isJumping: false,
+    jumpVelocity: 0,
+    isLowering: false,
+    lowerVelocity: 0,
+    isRecoveringFromLower: false,
+    lowerTimer: 0,
+  };
 }
 
 export function canPlayerMove(player) {
@@ -34,13 +28,16 @@ export function canPlayerLower(player) {
 }
 
 export function restorePlayerAlive(player) {
-  player.status = 'alive';
-  player.isJumping = false;
-  player.jumpVelocity = 0;
-  player.isLowering = false;
-  player.lowerVelocity = 0;
-  player.isRecoveringFromLower = false;
-  player.lowerTimer = 0;
+  return {
+    ...player,
+    status: 'alive',
+    isJumping: false,
+    jumpVelocity: 0,
+    isLowering: false,
+    lowerVelocity: 0,
+    isRecoveringFromLower: false,
+    lowerTimer: 0,
+  };
 }
 
 export function getPlayerStatus(player) {

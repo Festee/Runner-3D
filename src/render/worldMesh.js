@@ -50,22 +50,23 @@ function createLaneMarkers(scene, z) {
   });
 
   const laneMarkerGeometry = new THREE.BoxGeometry(0.14, 0.025, 8.5);
-  const laneMarkers = [];
   const markerCount = 8;
   const markerStep = WORLD_DEFAULTS.segmentLength / markerCount;
 
-  for (let i = 0; i < markerCount; i++) {
+  return Array.from({ length: markerCount }, (_, index) => {
     const localZOffset =
-      -WORLD_DEFAULTS.segmentLength / 2 + markerStep * i + markerStep * 0.5;
+      -WORLD_DEFAULTS.segmentLength / 2 +
+      markerStep * index +
+      markerStep * 0.5;
+
     const marker = new THREE.Mesh(laneMarkerGeometry, laneMarkerMaterial);
     marker.position.set(0, WORLD_DEFAULTS.roadY + 0.01, z + localZOffset);
     marker.userData.localZOffset = localZOffset;
     marker.receiveShadow = true;
     scene.add(marker);
-    laneMarkers.push(marker);
-  }
 
-  return laneMarkers;
+    return marker;
+  });
 }
 
 function createRoadEdgeStrip(scene, x, z) {

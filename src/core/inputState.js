@@ -5,33 +5,80 @@ import {
   canPlayerLower,
 } from '../logic/playerStateTransitions.js';
 
+function movePlayerLeft(player) {
+  if (!canPlayerChangeLane(player)) {
+    return player;
+  }
+
+  return {
+    ...player,
+    targetLane: Math.max(-1, player.targetLane - 1),
+  };
+}
+
+function movePlayerRight(player) {
+  if (!canPlayerChangeLane(player)) {
+    return player;
+  }
+
+  return {
+    ...player,
+    targetLane: Math.min(1, player.targetLane + 1),
+  };
+}
+
+function startPlayerJump(player) {
+  if (!canPlayerJump(player)) {
+    return player;
+  }
+
+  return {
+    ...player,
+    isJumping: true,
+    jumpVelocity: PLAYER_DEFAULTS.jumpStrength,
+  };
+}
+
+function startPlayerLower(player) {
+  if (!canPlayerLower(player)) {
+    return player;
+  }
+
+  return {
+    ...player,
+    isLowering: true,
+    isRecoveringFromLower: false,
+    lowerVelocity: -PLAYER_DEFAULTS.lowerStrength,
+    lowerTimer: PLAYER_DEFAULTS.lowerHoldFrames,
+  };
+}
+
+function applyPlayerInput(player, code) {
+  if (code === 'ArrowLeft' || code === 'KeyA') {
+    return movePlayerLeft(player);
+  }
+
+  if (code === 'ArrowRight' || code === 'KeyD') {
+    return movePlayerRight(player);
+  }
+
+  if (code === 'Space' || code === 'ArrowUp') {
+    return startPlayerJump(player);
+  }
+
+  if (code === 'ArrowDown') {
+    return startPlayerLower(player);
+  }
+
+  return player;
+}
+
 export function setupPlayerInput(state) {
   window.addEventListener('keydown', (e) => {
-    if (!state.started || state.gameOver) return;
-
-    // Lane switching - check if player can change lanes
-    if (canPlayerChangeLane(state.player)) {
-      if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
-        state.player.targetLane = Math.max(-1, state.player.targetLane - 1);
-      }
-
-      if (e.code === 'ArrowRight' || e.code === 'KeyD') {
-        state.player.targetLane = Math.min(1, state.player.targetLane + 1);
-      }
+    if (!state.started || state.gameOver) {
+      return;
     }
 
-    // Jump - check if player can jump
-    if ((e.code === 'Space' || e.code === 'ArrowUp') && canPlayerJump(state.player)) {
-      state.player.isJumping = true;
-      state.player.jumpVelocity = PLAYER_DEFAULTS.jumpStrength;
-    }
-
-    // Lower - check if player can lower
-    if (e.code === 'ArrowDown' && canPlayerLower(state.player)) {
-      state.player.isLowering = true;
-      state.player.isRecoveringFromLower = false;
-      state.player.lowerVelocity = -PLAYER_DEFAULTS.lowerStrength;
-      state.player.lowerTimer = PLAYER_DEFAULTS.lowerHoldFrames;
-    }
+    state.player = applyPlayerInput(state.player, e.code);
   });
 }

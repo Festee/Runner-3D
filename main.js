@@ -51,7 +51,7 @@ const state = createInitialGameState();
 // effects
 const cameraShake = createCameraShake();
 const knockback = createKnockbackState();
-let cameraBasePosition = { x: 0, y: 3, z: 8 };
+const cameraBasePosition = { x: 0, y: 3, z: 8 };
 
 // scene
 const scene = createScene();
@@ -103,7 +103,7 @@ const scoreHud = createScoreHud();
 
 function renderStartScreen() {
   setGamePhase(state, 'start');
-  showStartScreen(overlay, state.highScore, startGame, state.ui.visualMode);
+  showStartScreen(overlay, state.highScore, state.totalCoins, startGame, state.ui.visualMode);
 }
 
 function startGame(visualMode = 'day') {
@@ -135,15 +135,16 @@ function startGame(visualMode = 'day') {
     scoreHud,
     state.score,
     state.coinsCollected,
+    state.totalCoins,
     state.highScore
   );
-  
+
   hideOverlay(overlay);
 }
 
 function showGameOver() {
   setGamePhase(state, 'gameOver');
-  showGameOverScreen(overlay, state.score, state.highScore, renderStartScreen);
+  showGameOverScreen(overlay, state.score, state.highScore, state.totalCoins, renderStartScreen);
 }
 
 renderStartScreen();
@@ -199,6 +200,7 @@ function animate() {
         scoreHud,
         gameplayResult.scoreResult.score,
         gameplayResult.scoreResult.coinsCollected,
+        gameplayResult.scoreResult.totalCoins,
         gameplayResult.scoreResult.highScore
       );
     }
