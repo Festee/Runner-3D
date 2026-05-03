@@ -1,8 +1,3 @@
-/**
- * Camera shake effect system
- * Applies temporary vibration to the camera for impact feedback
- */
-
 export function createCameraShake() {
   return {
     isActive: false,
