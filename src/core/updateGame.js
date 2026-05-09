@@ -9,6 +9,22 @@ import {
 import { addCollectedCoinsScore, updateScore } from '../logic/scoring.js';
 import { updateKnockback, isKnockbackActive } from '../logic/knockback.js';
 
+function calculateScoreAndEvents(state, hitObstacle, collectedCount) {
+  if (hitObstacle) {
+    return { scoreResult: null, events: ['playerHit'] };
+  }
+
+  let scoreResult = updateScore(state);
+  const events = [];
+
+  if (collectedCount > 0) {
+    scoreResult = addCollectedCoinsScore(state, collectedCount);
+    events.push('coinPickup');
+  }
+
+  return { scoreResult, events };
+}
+
 export function updateGameplay(state, systems) {
   const {
     world,
@@ -35,30 +51,22 @@ export function updateGameplay(state, systems) {
     obstacles,
     knockback
   );
-  
-  if (hitObstacle) {
-    events.push('playerHit');
-  }
 
-  let scoreResult = null;
   const collectedCount = hitObstacle
     ? 0
     : collectCollectibles(state.player, collectibles);
-
-  if (!hitObstacle) {
-    scoreResult = updateScore(state);
-
-    if (collectedCount > 0) {
-      scoreResult = addCollectedCoinsScore(state, collectedCount);
-      events.push('coinPickup');
-    }
-}
+  const scoringOutcome = calculateScoreAndEvents(
+    state,
+    hitObstacle,
+    collectedCount
+  );
+  events.push(...scoringOutcome.events);
 
   return {
     respawnedIndices,
     respawnedCollectibleIndices,
     hitObstacle,
-    scoreResult,
+    scoreResult: scoringOutcome.scoreResult,
     events,
   };
 }

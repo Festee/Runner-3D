@@ -1,9 +1,63 @@
 import { saveHighScore } from '../core/highScoreStorage.js';
 import { saveTotalCoins } from '../core/coinStorage.js';
+import { pipe } from '../core/fp.js';
 import { calculateSpeedFromScore } from './difficulty.js';
 
 const SCORE_STEP = 1;
 const COLLECTIBLE_SCORE_VALUE = 50;
+const SCORE_KEYS = ['score', 'coinsCollected', 'totalCoins', 'highScore', 'speed'];
+
+function projectScoreSnapshot(stateLike) {
+  return SCORE_KEYS.reduce((snapshot, key) => {
+    snapshot[key] = stateLike[key];
+    return snapshot;
+  }, {});
+}
+
+function withScoreDelta(delta, collectedCoinsDelta = 0) {
+  return (currentState) => {
+    const nextScore = currentState.score + delta;
+    const nextCoinsCollected = currentState.coinsCollected + collectedCoinsDelta;
+    const nextTotalCoins = currentState.totalCoins + collectedCoinsDelta;
+    const nextHighScore = Math.max(currentState.highScore, nextScore);
+
+    return {
+      score: nextScore,
+      coinsCollected: nextCoinsCollected,
+      totalCoins: nextTotalCoins,
+      highScore: nextHighScore,
+      speed: calculateSpeedFromScore(nextScore),
+      highScoreChanged: nextHighScore !== currentState.highScore,
+      totalCoinsChanged: nextTotalCoins !== currentState.totalCoins,
+    };
+  };
+}
+
+function persistScoreChanges(nextScoreState) {
+  if (nextScoreState.highScoreChanged) {
+    saveHighScore(nextScoreState.highScore);
+  }
+
+  if (nextScoreState.totalCoinsChanged) {
+    saveTotalCoins(nextScoreState.totalCoins);
+  }
+
+  return nextScoreState;
+}
+
+function applyNextScoreState(state, nextScoreState) {
+  Object.assign(state, projectScoreSnapshot(nextScoreState));
+  return projectScoreSnapshot(state);
+}
+
+function applyScoreTransform(state, scoreTransform) {
+  return pipe(
+    projectScoreSnapshot(state),
+    scoreTransform,
+    persistScoreChanges,
+    (nextScoreState) => applyNextScoreState(state, nextScoreState)
+  );
+}
 
 export function calculateNextScoreState(
   currentScore,
@@ -13,79 +67,27 @@ export function calculateNextScoreState(
   delta,
   collectedCoinsDelta = 0
 ) {
-  const nextScore = currentScore + delta;
-  const nextCoinsCollected = currentCoinsCollected + collectedCoinsDelta;
-  const nextTotalCoins = currentTotalCoins + collectedCoinsDelta;
-  const nextHighScore = Math.max(currentHighScore, nextScore);
-  const nextSpeed = calculateSpeedFromScore(nextScore);
-
-  return {
-    score: nextScore,
-    coinsCollected: nextCoinsCollected,
-    totalCoins: nextTotalCoins,
-    highScore: nextHighScore,
-    speed: nextSpeed,
-    highScoreChanged: nextHighScore !== currentHighScore,
-    totalCoinsChanged: nextTotalCoins !== currentTotalCoins,
-  };
-}
-
-function applyScoreState(state, nextScoreState) {
-  state.score = nextScoreState.score;
-  state.coinsCollected = nextScoreState.coinsCollected;
-  state.totalCoins = nextScoreState.totalCoins;
-  state.highScore = nextScoreState.highScore;
-  state.speed = nextScoreState.speed;
-
-  if (nextScoreState.highScoreChanged) {
-    saveHighScore(nextScoreState.highScore);
-  }
-
-  if (nextScoreState.totalCoinsChanged) {
-    saveTotalCoins(nextScoreState.totalCoins);
-  }
-
-  return {
-    score: state.score,
-    coinsCollected: state.coinsCollected,
-    totalCoins: state.totalCoins,
-    highScore: state.highScore,
-    speed: state.speed,
-  };
-}
-
-function applyScoreDelta(state, delta, collectedCoinsDelta = 0) {
-  const nextScoreState = calculateNextScoreState(
-    state.score,
-    state.coinsCollected,
-    state.totalCoins,
-    state.highScore,
-    delta,
-    collectedCoinsDelta
-  );
-
-  return applyScoreState(state, nextScoreState);
+  return withScoreDelta(delta, collectedCoinsDelta)({
+    score: currentScore,
+    coinsCollected: currentCoinsCollected,
+    totalCoins: currentTotalCoins,
+    highScore: currentHighScore,
+    speed: calculateSpeedFromScore(currentScore),
+  });
 }
 
 export function updateScore(state) {
-  return applyScoreDelta(state, SCORE_STEP);
+  return applyScoreTransform(state, withScoreDelta(SCORE_STEP));
 }
 
 export function addCollectedCoinsScore(state, collectedCount) {
   if (collectedCount <= 0) {
-    return {
-      score: state.score,
-      coinsCollected: state.coinsCollected,
-      totalCoins: state.totalCoins,
-      highScore: state.highScore,
-      speed: state.speed,
-    };
+    return projectScoreSnapshot(state);
   }
 
-  return applyScoreDelta(
+  return applyScoreTransform(
     state,
-    COLLECTIBLE_SCORE_VALUE * collectedCount,
-    collectedCount
+    withScoreDelta(COLLECTIBLE_SCORE_VALUE * collectedCount, collectedCount)
   );
 }
 
