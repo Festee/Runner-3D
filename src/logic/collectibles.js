@@ -9,22 +9,43 @@ const COLLECTIBLE_Z_MAX = 4.2;
 
 export function updateCollectibles(state, collectibles) {
   const moveSpeed = state.speed * COLLECTIBLE_SCROLL_MULTIPLIER;
-  const respawnedCollectibleIndices = [];
+  const nextState = collectibles.reduce(
+    (acc, collectible, index) => {
+      const movedCollectible = advanceCollectible(collectible, moveSpeed);
+      const shouldRespawn =
+        movedCollectible.isActive &&
+        movedCollectible.z > COLLECTIBLE_RESPAWN_THRESHOLD_Z;
+      const nextCollectible = shouldRespawn
+        ? respawnCollectible(movedCollectible)
+        : movedCollectible;
 
-  collectibles.forEach((collectible, index) => {
-    if (!collectible.isActive) {
-      return;
-    }
+      acc.nextCollectibles.push(nextCollectible);
 
-    collectible.z += moveSpeed;
+      if (shouldRespawn) {
+        acc.respawnedCollectibleIndices.push(index);
+      }
 
-    if (collectible.z > COLLECTIBLE_RESPAWN_THRESHOLD_Z) {
-      collectibles[index] = respawnCollectible(collectible);
-      respawnedCollectibleIndices.push(index);
-    }
+      return acc;
+    },
+    { nextCollectibles: [], respawnedCollectibleIndices: [] }
+  );
+
+  nextState.nextCollectibles.forEach((collectible, index) => {
+    collectibles[index] = collectible;
   });
 
-  return respawnedCollectibleIndices;
+  return nextState.respawnedCollectibleIndices;
+}
+
+function advanceCollectible(collectible, moveSpeed) {
+  if (!collectible.isActive) {
+    return collectible;
+  }
+
+  return {
+    ...collectible,
+    z: collectible.z + moveSpeed,
+  };
 }
 
 function isCollectibleCollected(player, collectible) {
@@ -41,16 +62,23 @@ function isCollectibleCollected(player, collectible) {
 }
 
 export function collectCollectibles(player, collectibles) {
-  let collectedCount = 0;
+  const nextState = collectibles.reduce(
+    (acc, collectible) => {
+      if (!isCollectibleCollected(player, collectible)) {
+        acc.nextCollectibles.push(collectible);
+        return acc;
+      }
 
-  collectibles.forEach((collectible, index) => {
-    if (!isCollectibleCollected(player, collectible)) {
-      return;
-    }
+      acc.collectedCount += 1;
+      acc.nextCollectibles.push(respawnCollectible(collectible));
+      return acc;
+    },
+    { collectedCount: 0, nextCollectibles: [] }
+  );
 
-    collectedCount += 1;
-    collectibles[index] = respawnCollectible(collectible);
+  nextState.nextCollectibles.forEach((collectible, index) => {
+    collectibles[index] = collectible;
   });
 
-  return collectedCount;
+  return nextState.collectedCount;
 }
